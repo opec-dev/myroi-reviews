@@ -6,12 +6,21 @@ export default defineSchema({
     authSubject: v.string(),
     email: v.string(),
     displayName: v.optional(v.string()),
+    isPlatformAdmin: v.boolean(),
   }).index("by_auth_subject", ["authSubject"]),
 
   organizations: defineTable({
     name: v.string(),
     ownerUserId: v.id("users"),
   }).index("by_owner", ["ownerUserId"]),
+
+  pendingInvitations: defineTable({
+    email: v.string(),
+    businessName: v.string(),
+    invitedByUserId: v.id("users"),
+    status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("revoked")),
+    workosInvitationId: v.optional(v.string()),
+  }).index("by_email", ["email"]),
 
   memberships: defineTable({
     organizationId: v.id("organizations"),
@@ -57,6 +66,49 @@ export default defineSchema({
     displayOrder: v.number(),
     isEnabled: v.boolean(),
   }).index("by_business", ["businessId", "displayOrder"]),
+
+  funnelSettings: defineTable({
+    businessId: v.id("businesses"),
+    ratingHeadline: v.string(),
+    ratingSubtext: v.string(),
+    positiveThreshold: v.number(),
+    positiveHeadline: v.string(),
+    positiveSubtext: v.string(),
+    maybeLaterText: v.string(),
+    completionHeadline: v.string(),
+    completionSubtext: v.string(),
+    recoveryHeadline: v.string(),
+    recoverySubtext: v.string(),
+    nameLabel: v.string(),
+    contactLabel: v.string(),
+    messageLabel: v.string(),
+    submitText: v.string(),
+    publicLinkText: v.string(),
+  }).index("by_business", ["businessId"]),
+
+  privateFeedback: defineTable({
+    businessId: v.id("businesses"),
+    rating: v.number(),
+    name: v.optional(v.string()),
+    contact: v.string(),
+    message: v.string(),
+    status: v.union(v.literal("new"), v.literal("contacted"), v.literal("resolved")),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_business_status", ["businessId", "status"]),
+
+  printCardSettings: defineTable({
+    businessId: v.id("businesses"),
+    title: v.string(),
+    subtitle: v.string(),
+    phone: v.string(),
+    website: v.string(),
+    scanLabel: v.string(),
+    titleSize: v.number(),
+    subtitleSize: v.number(),
+    platformBadges: v.array(v.string()),
+    additionalLogoStorageIds: v.array(v.id("_storage")),
+  }).index("by_business", ["businessId"]),
 
   reviews: defineTable({
     businessId: v.id("businesses"),

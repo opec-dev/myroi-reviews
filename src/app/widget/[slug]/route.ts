@@ -33,7 +33,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     root.querySelector(".head strong").textContent = data.business + " reviews";
     const allLink = root.querySelector(".all");
     allLink.href = origin + data.publicUrl;
-    root.querySelector(".reviews").innerHTML = data.reviews.map((review) => '<article class="review"><span class="stars">★★★★★</span><p>“' + review.excerpt + '”</p><strong>' + review.reviewer + '</strong> · ' + review.source + '<br><a href="' + review.sourceUrl + '" target="_blank" rel="noopener">Read at the source ↗</a></article>').join("");
+    root.querySelector(".reviews").innerHTML = data.reviews.map((review) => '<article class="review"><span class="stars">★★★★★</span><p>“' + review.excerpt + '”</p><strong>' + review.reviewer + '</strong> · ' + review.source + (review.reviewUrl ? '<br><a href="' + review.reviewUrl + '" target="_blank" rel="noopener">Review us on ' + review.source + ' ↗</a>' : '') + '</article>').join("");
     let index = 0;
     const showReview = () => {
       const review = data.reviews[index % data.reviews.length];

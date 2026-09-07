@@ -1,0 +1,4 @@
+export default function LoginPage() {
+  const configured = Boolean(process.env.WORKOS_CLIENT_ID && process.env.WORKOS_API_KEY && process.env.WORKOS_COOKIE_PASSWORD);
+  return <main className="login-page"><section className="login-card"><div className="platform-brand login-brand"><img src="/brands/myroiagency-logo.png" alt="" /><strong>myROIagency</strong><span>Reviews</span></div><h1>Welcome back</h1><p>Administrators and client owners use one secure account to manage their review experience.</p>{configured ? <a className="button primary login-button" href="/sign-in">Continue to secure sign in</a> : <div className="auth-notice"><strong>Authentication foundation is ready.</strong><span>Add the WorkOS application values to activate secure sign-in.</span></div>}<small>Client accounts are invitation-only.</small></section></main>;
+}

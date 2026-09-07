@@ -65,7 +65,7 @@ export function DestinationManager({ initialDestinations }: { initialDestination
       <div><span className="eyebrow">Where reviews happen</span><h2>Review sites</h2></div>
       <button className="button primary" onClick={openNew}>+ Add platform</button>
     </div>
-    <p className="panel-intro">Choose a supported site and paste the link customers use to leave a review.</p>
+    <p className="panel-intro">Choose a supported site and keep its write-review link separate from the profile used to read or import reviews.</p>
     <div className="destination-list">
       {destinations.map((destination, index) => <div className="destination" key={destination.id}>
         <span className="source-icon" style={{ background: destination.color }}>{destination.name[0]}</span>
@@ -85,12 +85,12 @@ export function DestinationManager({ initialDestinations }: { initialDestination
       <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="platform-dialog-title">
         <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Close">×</button>
         <h2 id="platform-dialog-title">{draft.id ? "Edit review platform" : "Add a review platform"}</h2>
-        <p>Choose the platform and paste the link customers use to review you.</p>
+        <p>Only enable a destination when its first link opens the platform&apos;s review-entry flow.</p>
         <form onSubmit={submit}>
           <label>Platform<select value={draft.provider} onChange={(event) => changeProvider(event.target.value as ReviewProvider)}>{reviewPlatformCatalog.map((platform) => <option key={platform.provider} value={platform.provider}>{platform.name}</option>)}</select></label>
           {draft.provider === "custom" && <label>Platform name<input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Diamond Certified" /></label>}
-          <label>Review link<input value={draft.reviewUrl} onChange={(event) => setDraft({ ...draft, reviewUrl: event.target.value })} placeholder="https://..." /></label>
-          <label>Public profile URL <span>(optional)</span><input value={draft.profileUrl} onChange={(event) => setDraft({ ...draft, profileUrl: event.target.value })} placeholder="https://..." /></label>
+          <label>Direct write-review link<input value={draft.reviewUrl} onChange={(event) => setDraft({ ...draft, reviewUrl: event.target.value })} placeholder="https://..." /><small>Where the customer can immediately start writing a review.</small></label>
+          <label>Review source/profile URL <span>(optional)</span><input value={draft.profileUrl} onChange={(event) => setDraft({ ...draft, profileUrl: event.target.value })} placeholder="https://..." /><small>Where existing reviews are read or imported from. This can be different.</small></label>
           {error && <div className="form-error">{error}</div>}
           <div className="modal-actions"><button type="button" className="button" onClick={() => setModalOpen(false)}>Cancel</button><button className="button primary" type="submit">{draft.id ? "Save changes" : "Add platform"}</button></div>
         </form>

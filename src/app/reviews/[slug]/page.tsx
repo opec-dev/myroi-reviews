@@ -18,7 +18,7 @@ export default async function ReviewWallPage({ params }: { params: Promise<{ slu
             <div className="review-meta"><span className="stars">★★★★★</span><span>{review.source}</span></div>
             <blockquote>“{review.excerpt}”</blockquote>
             <div><span className="reviewer-avatar">{review.reviewer.slice(0, 1)}</span><strong>{review.reviewer}</strong></div>
-            <a href={review.sourceUrl} target="_blank" rel="noopener noreferrer">Read at the source ↗</a>
+            {review.reviewUrl && <a href={review.reviewUrl} target="_blank" rel="noopener noreferrer">Review us on {review.source} ↗</a>}
           </article>
         ))}
       </section>

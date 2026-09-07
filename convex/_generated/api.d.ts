@@ -8,13 +8,25 @@
  * @module
  */
 
+import type * as accounts from "../accounts.js";
+import type * as businesses from "../businesses.js";
+import type * as destinations from "../destinations.js";
+import type * as funnel from "../funnel.js";
+import type * as helpers from "../helpers.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  accounts: typeof accounts;
+  businesses: typeof businesses;
+  destinations: typeof destinations;
+  funnel: typeof funnel;
+  helpers: typeof helpers;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.

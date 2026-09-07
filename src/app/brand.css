@@ -1,0 +1,86 @@
+:root {
+  --ink: #17131d;
+  --muted: #716a78;
+  --line: #e6e1e9;
+  --surface: #ffffff;
+  --canvas: #f7f6f8;
+  --primary: #b100ff;
+  --primary-deep: #8e00cc;
+  --primary-soft: #f5e9fb;
+}
+
+.sidebar {
+  padding: 24px 20px;
+  color: #e6e6e6;
+  background: #000000;
+  border-right: 1px solid #272029;
+}
+
+.platform-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  color: #ffffff;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.platform-brand img {
+  display: block;
+  width: 58px;
+  height: 48px;
+  object-fit: cover;
+  object-position: 50% 7%;
+}
+
+.platform-brand > strong { color: #ffffff; font-size: 16px; white-space: nowrap; }
+
+.platform-brand span {
+  padding: 4px 8px;
+  color: #f1cfff;
+  background: #b100ff1f;
+  border: 1px solid #b100ff66;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.platform-brand.compact { margin: 0; }
+.platform-brand.compact img { width: 64px; height: 52px; }
+.sidebar nav a { color: #bdb5c2; }
+.sidebar nav a:hover,
+.sidebar nav a.active { color: #ffffff; background: linear-gradient(90deg, #b100ff38, #b100ff12); }
+.sidebar nav a.active { box-shadow: inset 3px 0 #b100ff; }
+.sidebar nav .admin-nav-link { margin-top: 18px; border: 1px solid #ffffff18; }
+.sidebar .platform-brand { gap: 8px; }
+.sidebar .platform-brand span { display: none; }
+.topbar { box-shadow: 0 1px 0 #b100ff0a; }
+.eyebrow { color: var(--primary-deep, var(--primary)); }
+.button.primary {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-deep, var(--primary)));
+  box-shadow: 0 8px 18px #b100ff20;
+}
+.button.primary:hover { filter: brightness(.96); }
+
+.login-page {
+  background: radial-gradient(circle at 18% 15%, #b100ff22, transparent 34%),
+    radial-gradient(circle at 82% 84%, #c133ff18, transparent 32%), #09070b;
+}
+.login-card { border-color: #c133ff55; box-shadow: 0 28px 90px #00000099; }
+.login-brand { justify-content: center; margin: 0 0 18px; padding: 8px 16px; border-radius: 15px; background: #000000; }
+.login-brand img { width: 64px; height: 52px; }
+.auth-notice { color: #64248a; background: var(--primary-soft); }
+
+.admin-page { background: linear-gradient(180deg, #f4eef7, #f8f7f9 260px); }
+.admin-header { min-height: 82px; height: auto; background: #000000; border-bottom: 2px solid var(--primary); }
+.admin-header > div:last-child { display: grid; text-align: right; }
+.admin-header small { color: #c9bdce; }
+.admin-content > h1 { margin: 7px 0 5px; letter-spacing: -.035em; }
+
+@media (max-width: 700px) {
+  .platform-brand.compact img { width: 52px; height: 44px; }
+  .admin-header > div:last-child { text-align: left; }
+}

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { demoBusiness, demoDestinations, demoReviews } from "@/lib/demo-data";
 import { DestinationManager } from "@/components/destination-manager";
+import { FunnelSettingsEditor } from "@/components/funnel-settings";
+import { PrintCardSettingsEditor } from "@/components/print-card-settings";
 
 const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
 const staticExport = process.env.STATIC_EXPORT === "true";
@@ -10,20 +12,21 @@ export default function DashboardPage() {
   return (
     <main className="app-shell">
       <aside className="sidebar">
-        <div className="brand-mark"><span>★</span> myROI Reviews</div>
+        <div className="platform-brand"><img src="/brands/myroiagency-logo.png" alt="" /><strong>myROIagency</strong><span>Reviews</span></div>
         <nav>
           <a className="active" href="#overview">Overview</a>
           <a href="#destinations">Review sites</a>
           <a href="#reviews">Published reviews</a>
           <a href="#embeds">Website embeds</a>
           <a href="#qr">QR & print card</a>
+          <Link className="admin-nav-link" href="/admin">Admin accounts</Link>
         </nav>
       </aside>
 
       <section className="workspace">
         <header className="topbar">
           <div className="business-avatar"><img src={demoBusiness.logoUrl} alt="" /></div>
-          <div><strong>{demoBusiness.name}</strong><small>Demo workspace</small></div>
+          <div><strong>{demoBusiness.name}</strong><small>Client workspace · powered by myROIagency</small></div>
         </header>
 
         <div className="content">
@@ -49,13 +52,17 @@ export default function DashboardPage() {
           </section>
 
           <div className="metric-grid">
-            <article><span>Review destinations</span><strong>{demoDestinations.length}</strong><small>All enabled</small></article>
+            <article><span>Review destinations</span><strong>{demoDestinations.filter(destination => destination.enabled).length}</strong><small>Google + Yelp active</small></article>
             <article><span>Published reviews</span><strong>{demoReviews.length}</strong><small>Ready for embeds</small></article>
             <article><span>Website displays</span><strong>2</strong><small>Popup + review wall</small></article>
           </div>
 
           <section id="destinations" className="panel">
             <DestinationManager initialDestinations={demoDestinations} />
+          </section>
+
+          <section id="funnel" className="panel">
+            <FunnelSettingsEditor />
           </section>
 
           <section id="reviews" className="panel">
@@ -76,7 +83,12 @@ export default function DashboardPage() {
             <div className="embed-grid">
               <article><strong>Rotating popup</strong><p>A compact review appears every 15 seconds and opens into a browsable panel.</p><code>{installCode}</code></article>
               <article><strong>Review wall</strong><p>A responsive review grid for a dedicated testimonials page.</p><code>{`<iframe src="${appOrigin}/reviews/${demoBusiness.slug}/" title="Customer reviews"></iframe>`}</code></article>
+              <article><strong>Rating funnel</strong><p>Add the full good-review/private-recovery flow to any page.</p><code>{`<iframe src="${appOrigin}/r/${demoBusiness.slug}/" title="Share your experience"></iframe>`}</code></article>
             </div>
+          </section>
+
+          <section className="panel">
+            <PrintCardSettingsEditor />
           </section>
 
           <section id="qr" className="panel qr-download-panel">

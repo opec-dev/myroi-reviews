@@ -8,7 +8,7 @@ Give a local business one simple place to configure where customers can leave re
 
 1. **Platform administrator** — myROI staff using `support-team@myroiagency.com`; creates and supports client accounts and manages myROI branding.
 2. **Client owner** — receives an invitation and initially manages one business and one website.
-3. **Review visitor** — scans a QR code or follows a link to choose an external review site.
+3. **Review visitor** — scans a QR code or follows a link, rates the experience, and continues to either public review choices or private service recovery.
 4. **Website visitor** — sees review proof in the popup or review wall.
 
 ## Included in v1
@@ -28,16 +28,20 @@ Give a local business one simple place to configure where customers can leave re
 - Yelp
 - Diamond Certified
 - Custom destination
-- Destination name, direct review URL, public profile URL, icon, display order, and enabled state
+- Destination name, direct write-review URL, separate review source/profile URL, icon, display order, and enabled state
+- Only destinations with a verified review-entry URL are enabled in the public funnel
 - URL validation and safe external-link handling
 
 ### Public review page
 
 - Branded URL at `/r/{businessSlug}`
 - Logo and business colors
-- Neutral prompt asking where the visitor would like to share their experience
-- Equal access to all enabled review destinations
-- Optional private-feedback link shown to every visitor
+- Mobile-first five-star experience prompt with a configurable positive threshold (default: 4)
+- Ratings at or above the threshold show enabled direct review destinations using “Review us on …” actions
+- Ratings below the threshold show an editable private service-recovery form
+- Public review access remains visible from the private-feedback screen
+- Editable copy for the rating, positive, recovery, and completion stages
+- “Maybe later” completion path
 - Click attribution without intercepting the third-party review submission
 
 ### QR and print collateral
@@ -46,7 +50,8 @@ Give a local business one simple place to configure where customers can leave re
 - Centered logo with a protected white quiet area and high error correction
 - PNG and SVG download
 - Print-ready 3.5 × 2 inch business-card PDF with bleed and safe margins
-- Front design contains configurable business logo/name, review-request wording, QR code, and fallback URL
+- Front design contains configurable business logo/name, title, subtitle, phone, website, QR caption, QR code, and type sizes
+- Built-in original Google/Yelp review artwork plus room for additional client or industry badges
 - Optional back design contains instructions or contact information
 - Admin-selectable templates with client-specific preview before export
 
@@ -68,7 +73,7 @@ Give a local business one simple place to configure where customers can leave re
 - First appearance delay, rotation interval, theme, and minimum rating settings
 - Pause while opened and hide near the site footer
 - Mobile responsive, keyboard accessible, and dismissible
-- Links each review to its source
+- Uses “Review us on …” calls to action when a direct review-entry link is configured
 
 #### Review wall
 
@@ -104,22 +109,23 @@ Give a local business one simple place to configure where customers can leave re
 
 ## Compliance behavior
 
-- The public page never conditions access to review destinations on a rating.
-- The application does not ask for a predetermined positive rating.
-- Private feedback is available on the same basis to every visitor.
+- The initial prompt asks for an honest experience rating without requesting a predetermined positive score.
+- Lower ratings receive a service-recovery path, while a clearly visible public-review option remains available.
+- Destination links are never hidden from a visitor who chooses the public-review option.
 - Review displays retain platform attribution and link to the original source.
 - Imported reviews require an attestation that the business has the right to display them.
 - Provider content retention and refresh rules are enforced per provider.
 
 ## Acceptance criteria
 
-1. A new owner can create an account and business workspace.
+1. An administrator can invite an owner; the owner's first login provisions a tenant-isolated business workspace.
 2. The owner can add Google, Yelp, Diamond Certified, or custom destinations.
-3. The public review page reflects logo, colors, and enabled destinations.
-4. A visitor can reach an external review form in two taps or fewer.
-5. The owner can download a scannable logo-centered QR code.
-6. The print PDF passes a 300-DPI visual and QR scan check.
-7. The owner can add and publish a curated review.
-8. The popup and wall display published reviews on an unrelated test page.
-9. Disabling a review or destination removes it from public output without changing embed code.
-10. Tenant authorization tests prove one business cannot access another business's data.
+3. The public funnel reflects logo, colors, editable copy, threshold, and enabled direct-review destinations.
+4. A visitor who selects a positive rating can reach an external review-entry form in two taps or fewer.
+5. A lower-rating visitor can submit private feedback and can still choose a public review destination.
+6. The owner can download a scannable logo-centered QR code.
+7. The print PDF passes a 300-DPI visual and QR scan check.
+8. The owner can add and publish a curated review.
+9. The popup and wall display published reviews on an unrelated test page.
+10. Disabling a review or destination removes it from public output without changing embed code.
+11. Tenant authorization tests prove one business cannot access another business's data.

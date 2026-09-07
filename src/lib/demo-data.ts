@@ -26,6 +26,67 @@ export const reviewPlatformCatalog: Array<{ provider: ReviewProvider; name: stri
 ];
 
 export const destinationStorageKey = "myroi:destinations:yorkshire-roofing";
+export const funnelSettingsStorageKey = "myroi:funnel:yorkshire-roofing";
+export const printSettingsStorageKey = "myroi:print:yorkshire-roofing";
+export const privateFeedbackStorageKey = "myroi:feedback:yorkshire-roofing";
+
+export type FunnelSettings = {
+  ratingHeadline: string;
+  ratingSubtext: string;
+  positiveThreshold: number;
+  positiveHeadline: string;
+  positiveSubtext: string;
+  maybeLaterText: string;
+  completionHeadline: string;
+  completionSubtext: string;
+  recoveryHeadline: string;
+  recoverySubtext: string;
+  nameLabel: string;
+  contactLabel: string;
+  messageLabel: string;
+  submitText: string;
+  publicLinkText: string;
+};
+
+export const defaultFunnelSettings: FunnelSettings = {
+  ratingHeadline: "How was your experience?",
+  ratingSubtext: "Your feedback helps us serve you better. It only takes a few seconds.",
+  positiveThreshold: 4,
+  positiveHeadline: "Thank you so much!",
+  positiveSubtext: "We're thrilled you had a great experience. Would you mind sharing it? It only takes a moment.",
+  maybeLaterText: "Maybe later",
+  completionHeadline: "Thanks for your feedback!",
+  completionSubtext: "We truly appreciate you taking the time. You can close this window.",
+  recoveryHeadline: "We're sorry we missed the mark",
+  recoverySubtext: "Tell us what went wrong and we'll make it right. Your feedback goes straight to the owner.",
+  nameLabel: "Your name",
+  contactLabel: "Email or phone",
+  messageLabel: "What went wrong?",
+  submitText: "Send feedback privately",
+  publicLinkText: "I prefer to post a public review",
+};
+
+export type PrintSettings = {
+  title: string;
+  subtitle: string;
+  phone: string;
+  website: string;
+  scanLabel: string;
+  titleSize: number;
+  subtitleSize: number;
+  platformBadges: string[];
+};
+
+export const defaultPrintSettings: PrintSettings = {
+  title: "How was your experience?",
+  subtitle: "Scan to share your feedback. Your review helps local homeowners choose with confidence.",
+  phone: "(800) 794-7444",
+  website: "yorkshireroofing.com",
+  scanLabel: "Scan to review",
+  titleSize: 37,
+  subtitleSize: 17,
+  platformBadges: ["google-yelp"],
+};
 
 export type PublishedReview = {
   id: string;
@@ -34,6 +95,7 @@ export type PublishedReview = {
   excerpt: string;
   source: string;
   sourceUrl: string;
+  reviewUrl?: string;
 };
 
 export const demoBusiness = {
@@ -54,7 +116,8 @@ export const demoDestinations: ReviewDestination[] = [
     id: "google",
     provider: "google",
     name: "Google",
-    reviewUrl: "https://maps.app.goo.gl/nxMPvZYEQbnqxyqF6",
+    reviewUrl: "https://search.google.com/local/writereview?placeid=ChIJO_c-yLjgj4ARDnH58VKbhIg",
+    profileUrl: "https://maps.app.goo.gl/nxMPvZYEQbnqxyqF6",
     color: "#4285f4",
     enabled: true,
   },
@@ -64,6 +127,7 @@ export const demoDestinations: ReviewDestination[] = [
     name: "Yelp",
     reviewUrl:
       "https://www.yelp.com/writeareview/biz/XiuDvYUoONhqJLmLPNrkeg?return_url=%2Fbiz%2FXiuDvYUoONhqJLmLPNrkeg&review_origin=biz-details-war-button",
+    profileUrl: "https://www.yelp.com/biz/yorkshire-roofing-livermore-2",
     color: "#d32323",
     enabled: true,
   },
@@ -73,8 +137,10 @@ export const demoDestinations: ReviewDestination[] = [
     name: "Diamond Certified",
     reviewUrl:
       "https://www.diamondcertified.org/report/yorkshire-roofing-of-northern-california-inc-dba-roofmax/",
+    profileUrl:
+      "https://www.diamondcertified.org/report/yorkshire-roofing-of-northern-california-inc-dba-roofmax/",
     color: "#1b4f8a",
-    enabled: true,
+    enabled: false,
   },
 ];
 
@@ -86,7 +152,8 @@ export const demoReviews: PublishedReview[] = [
     excerpt:
       "The job is always completed with meticulous attention to detail and cleaned up professionally.",
     source: "Google",
-    sourceUrl: demoDestinations[0].reviewUrl,
+    sourceUrl: demoDestinations[0].profileUrl!,
+    reviewUrl: demoDestinations[0].reviewUrl,
   },
   {
     id: "review-2",
@@ -95,7 +162,8 @@ export const demoReviews: PublishedReview[] = [
     excerpt:
       "Five-star customer service and repair. I was impressed by the team's professionalism and work ethic.",
     source: "Yelp",
-    sourceUrl: demoDestinations[1].reviewUrl,
+    sourceUrl: demoDestinations[1].profileUrl!,
+    reviewUrl: demoDestinations[1].reviewUrl,
   },
   {
     id: "review-3",
@@ -104,6 +172,6 @@ export const demoReviews: PublishedReview[] = [
     excerpt:
       "They were prompt, came when they said they would, and did a good job.",
     source: "Diamond Certified",
-    sourceUrl: demoDestinations[2].reviewUrl,
+    sourceUrl: demoDestinations[2].profileUrl!,
   },
 ];

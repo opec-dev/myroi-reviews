@@ -7,16 +7,16 @@ An owner-operated review marketing MVP for local businesses. The product gives e
 - User accounts and business workspaces
 - Business profile, logo, colors, and website
 - Google, Yelp, Diamond Certified, and custom review destinations
-- Branded public review page
+- Branded, mobile-first rating funnel with positive review choices and private service-recovery feedback
 - QR code with centered logo
 - Print-ready review card export
 - Curated review library with source attribution
 - Rotating review popup embed
 - Review wall/grid embed
 
-The MVP links customers directly to third-party review platforms. It does not publish, suppress, or reply to third-party reviews.
+The MVP keeps each platform's direct write-review link separate from its public profile/import source. It links customers to third-party review platforms and does not publish or reply to reviews on their behalf.
 
-The current Yorkshire Roofing pilot includes its supplied branding, Google/Yelp/Diamond Certified destinations, a 15-second rotating popup, review wall, branded QR, and print-card preview.
+The current Yorkshire Roofing pilot includes its supplied branding, direct Google and Yelp review destinations, Diamond Certified as a display source, a customizable rating/recovery funnel, a 15-second rotating popup, review wall, branded QR, and configurable print-card preview.
 
 See [docs/mvp-spec.md](docs/mvp-spec.md) for the product specification and [docs/architecture.md](docs/architecture.md) for the technical design.
 
