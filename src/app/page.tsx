@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { demoBusiness, demoDestinations, demoReviews } from "@/lib/demo-data";
+import { DestinationManager } from "@/components/destination-manager";
 
 const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
 const staticExport = process.env.STATIC_EXPORT === "true";
@@ -54,16 +55,7 @@ export default function DashboardPage() {
           </div>
 
           <section id="destinations" className="panel">
-            <div className="section-heading"><div><span className="eyebrow">Where reviews happen</span><h2>Review destinations</h2></div><button className="button primary">Add destination</button></div>
-            <div className="destination-list">
-              {demoDestinations.map((destination) => (
-                <div className="destination" key={destination.id}>
-                  <span className="source-icon" style={{ background: destination.color }}>{destination.name[0]}</span>
-                  <div><strong>{destination.name}</strong><small>{destination.reviewUrl}</small></div>
-                  <span className="enabled">Enabled</span>
-                </div>
-              ))}
-            </div>
+            <DestinationManager initialDestinations={demoDestinations} />
           </section>
 
           <section id="reviews" className="panel">

@@ -1,10 +1,31 @@
+export type ReviewProvider =
+  | "google" | "facebook" | "yelp" | "tripadvisor" | "trustpilot"
+  | "g2" | "capterra" | "healthgrades" | "diamond" | "custom";
+
 export type ReviewDestination = {
   id: string;
+  provider: ReviewProvider;
   name: string;
   reviewUrl: string;
+  profileUrl?: string;
   color: string;
   enabled: boolean;
 };
+
+export const reviewPlatformCatalog: Array<{ provider: ReviewProvider; name: string; color: string }> = [
+  { provider: "google", name: "Google", color: "#4285f4" },
+  { provider: "facebook", name: "Facebook", color: "#1877f2" },
+  { provider: "yelp", name: "Yelp", color: "#d32323" },
+  { provider: "tripadvisor", name: "Tripadvisor", color: "#34e0a1" },
+  { provider: "trustpilot", name: "Trustpilot", color: "#00b67a" },
+  { provider: "g2", name: "G2", color: "#ff492c" },
+  { provider: "capterra", name: "Capterra", color: "#ff9d28" },
+  { provider: "healthgrades", name: "Healthgrades", color: "#007d78" },
+  { provider: "diamond", name: "Diamond Certified", color: "#1b4f8a" },
+  { provider: "custom", name: "Custom", color: "#6857d9" },
+];
+
+export const destinationStorageKey = "myroi:destinations:yorkshire-roofing";
 
 export type PublishedReview = {
   id: string;
@@ -31,6 +52,7 @@ export const demoBusiness = {
 export const demoDestinations: ReviewDestination[] = [
   {
     id: "google",
+    provider: "google",
     name: "Google",
     reviewUrl: "https://maps.app.goo.gl/nxMPvZYEQbnqxyqF6",
     color: "#4285f4",
@@ -38,6 +60,7 @@ export const demoDestinations: ReviewDestination[] = [
   },
   {
     id: "yelp",
+    provider: "yelp",
     name: "Yelp",
     reviewUrl:
       "https://www.yelp.com/writeareview/biz/XiuDvYUoONhqJLmLPNrkeg?return_url=%2Fbiz%2FXiuDvYUoONhqJLmLPNrkeg&review_origin=biz-details-war-button",
@@ -46,6 +69,7 @@ export const demoDestinations: ReviewDestination[] = [
   },
   {
     id: "diamond",
+    provider: "diamond",
     name: "Diamond Certified",
     reviewUrl:
       "https://www.diamondcertified.org/report/yorkshire-roofing-of-northern-california-inc-dba-roofmax/",
