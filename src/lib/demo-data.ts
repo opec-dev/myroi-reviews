@@ -85,7 +85,7 @@ export const defaultPrintSettings: PrintSettings = {
   scanLabel: "Scan to review",
   titleSize: 37,
   subtitleSize: 17,
-  platformBadges: ["google-yelp"],
+  platformBadges: ["google", "yelp"],
 };
 
 export type PublishedReview = {

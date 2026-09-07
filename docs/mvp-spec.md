@@ -51,7 +51,7 @@ Give a local business one simple place to configure where customers can leave re
 - PNG and SVG download
 - Print-ready 3.5 × 2 inch business-card PDF with bleed and safe margins
 - Front design contains configurable business logo/name, title, subtitle, phone, website, QR caption, QR code, and type sizes
-- Built-in original Google/Yelp review artwork plus room for additional client or industry badges
+- Separate built-in Google and Yelp review logos, each independently selectable, plus room for additional client or industry badges
 - Optional back design contains instructions or contact information
 - Admin-selectable templates with client-specific preview before export
 

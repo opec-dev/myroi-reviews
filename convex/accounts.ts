@@ -27,7 +27,7 @@ export const syncCurrentUser = mutation({ args: {}, handler: async ctx => {
       recoveryHeadline: "We're sorry we missed the mark", recoverySubtext: "Tell us what went wrong and we'll make it right. Your feedback goes straight to the owner.",
       nameLabel: "Your name", contactLabel: "Email or phone", messageLabel: "What went wrong?", submitText: "Send feedback privately", publicLinkText: "I prefer to post a public review",
     }),
-    ctx.db.insert("printCardSettings", { businessId, title: "How was your experience?", subtitle: "Scan to share your feedback.", phone: "", website: "", scanLabel: "Scan to review", titleSize: 37, subtitleSize: 17, platformBadges: ["google-yelp"], additionalLogoStorageIds: [] }),
+    ctx.db.insert("printCardSettings", { businessId, title: "How was your experience?", subtitle: "Scan to share your feedback.", phone: "", website: "", scanLabel: "Scan to review", titleSize: 37, subtitleSize: 17, platformBadges: ["google", "yelp"], additionalLogoStorageIds: [] }),
     ctx.db.insert("embedSettings", { businessId, popupEnabled: true, popupPosition: "left", firstDelaySeconds: 10, rotationSeconds: 15, minimumRating: 4, wallEnabled: true, wallPageSize: 9 }),
   ]);
   await ctx.db.patch(invitation._id, { status: "accepted" });

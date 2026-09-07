@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 72" role="img" aria-labelledby="title">
+  <title id="title">Review us on Yelp</title>
+  <rect width="240" height="72" rx="12" fill="#fff"/>
+  <rect x="18" y="14" width="44" height="44" rx="11" fill="#d32323"/>
+  <text x="30" y="47" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#fff">Y</text>
+  <text x="72" y="29" font-family="Arial,sans-serif" font-size="13" fill="#666">REVIEW US ON</text>
+  <text x="72" y="54" font-family="Arial,sans-serif" font-size="30" font-weight="700" fill="#d32323">yelp</text>
+</svg>
