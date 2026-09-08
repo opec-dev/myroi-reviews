@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 72" role="img" aria-labelledby="title">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 175 72" role="img" aria-labelledby="title">
   <title id="title">Review us on Google</title>
-  <rect width="240" height="72" rx="12" fill="#fff"/>
+  <rect width="175" height="72" rx="12" fill="#fff"/>
   <path d="M42 18a18 18 0 1 0 18 18c0-1.4-.2-2.8-.5-4H42v8h10c-1.7 4-5.3 6.4-10 6.4A10.4 10.4 0 1 1 49.3 28l6-6A18 18 0 0 0 42 18Z" fill="#4285f4"/>
   <text x="70" y="28" font-family="Arial,sans-serif" font-size="13" fill="#5f6368">REVIEW US ON</text>
   <text x="70" y="53" font-family="Arial,sans-serif" font-size="27" font-weight="700" fill="#4285f4">Google</text>

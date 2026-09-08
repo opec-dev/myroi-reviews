@@ -4,7 +4,7 @@ import path from "node:path";
 
 const command = process.platform === "win32" ? "npx.cmd" : "npx";
 const hiddenRoot = path.join(process.cwd(), ".static-build-hidden");
-const serverOnly = ["src/proxy.ts", "src/app/sign-in", "src/app/callback", "src/app/api/admin/invitations/route.ts", "src/components/auth-provider.tsx"];
+const serverOnly = ["src/proxy.ts", "src/app/sign-in", "src/app/callback", "src/app/api/admin/invitations/route.ts", "src/app/api/feedback/route.ts", "src/app/api/events/route.ts", "src/components/auth-provider.tsx"];
 const authProviderPath = path.join(process.cwd(), "src/components/auth-provider.tsx");
 mkdirSync(hiddenRoot, { recursive: true });
 rmSync(path.join(process.cwd(), ".next", "dev", "types"), { recursive: true, force: true });

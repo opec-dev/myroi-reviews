@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireBusinessAccess } from "./helpers";
 
 const settings = {
-  ratingHeadline: v.string(), ratingSubtext: v.string(), positiveThreshold: v.number(), positiveHeadline: v.string(), positiveSubtext: v.string(), maybeLaterText: v.string(), completionHeadline: v.string(), completionSubtext: v.string(), recoveryHeadline: v.string(), recoverySubtext: v.string(), nameLabel: v.string(), contactLabel: v.string(), messageLabel: v.string(), submitText: v.string(), publicLinkText: v.string(),
+  showBusinessName: v.boolean(), ratingHeadline: v.string(), ratingSubtext: v.string(), positiveThreshold: v.number(), positiveHeadline: v.string(), positiveSubtext: v.string(), maybeLaterText: v.string(), completionHeadline: v.string(), completionSubtext: v.string(), recoveryHeadline: v.string(), recoverySubtext: v.string(), nameLabel: v.string(), contactLabel: v.string(), messageLabel: v.string(), submitText: v.string(), publicLinkText: v.string(),
 };
 
 export const publicBySlug = query({ args: { slug: v.string() }, handler: async (ctx, { slug }) => {

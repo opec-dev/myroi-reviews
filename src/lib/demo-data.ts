@@ -29,8 +29,28 @@ export const destinationStorageKey = "myroi:destinations:yorkshire-roofing";
 export const funnelSettingsStorageKey = "myroi:funnel:yorkshire-roofing";
 export const printSettingsStorageKey = "myroi:print:yorkshire-roofing";
 export const privateFeedbackStorageKey = "myroi:feedback:yorkshire-roofing";
+export const resellerSettingsStorageKey = "myroi:reseller-settings";
+export const businessBrandingStorageKey = "myroi:business-branding:yorkshire-roofing";
+export const analyticsStorageKey = "myroi:analytics-events";
+export const emailLogStorageKey = "myroi:email-delivery-log";
+export const pilotClientsStorageKey = "myroi:pilot-clients";
+export const clientNotificationSettingsStorageKey = "myroi:notifications:yorkshire-roofing";
+
+export type AnalyticsEventType = "funnel_view" | "qr_scan" | "rating_selected" | "private_feedback_submitted" | "destination_clicked" | "maybe_later" | "public_review_fallback";
+export type AnalyticsEvent = { id:string; businessSlug:string; type:AnalyticsEventType; occurredAt:string; sessionId:string; source?:string; destinationId?:string; destinationName?:string; rating?:number };
+export type EmailDeliveryLog = { id:string; businessSlug?:string; kind:"private_feedback"|"new_review"|"admin_failure_alert"|"invitation"; status:"sent"|"not_sent"|"failed"; recipient:string; subject:string; occurredAt:string; error?:string };
+
+export type BusinessBranding = { logoUrl:string; iconUrl:string; primaryColor:string; secondaryColor:string };
+export type ClientNotificationSettings = { notificationEmail:string; notifyPrivateFeedback:boolean; notifyNewReviews:boolean };
+
+export const defaultClientNotificationSettings:ClientNotificationSettings = {
+  notificationEmail:"opecora@sicconsulting.com",
+  notifyPrivateFeedback:true,
+  notifyNewReviews:false,
+};
 
 export type FunnelSettings = {
+  showBusinessName: boolean;
   ratingHeadline: string;
   ratingSubtext: string;
   positiveThreshold: number;
@@ -49,6 +69,7 @@ export type FunnelSettings = {
 };
 
 export const defaultFunnelSettings: FunnelSettings = {
+  showBusinessName: false,
   ratingHeadline: "How was your experience?",
   ratingSubtext: "Your feedback helps us serve you better. It only takes a few seconds.",
   positiveThreshold: 4,
@@ -74,17 +95,31 @@ export type PrintSettings = {
   scanLabel: string;
   titleSize: number;
   subtitleSize: number;
+  titleColor: string;
+  backTitle: string;
+  backSubtitle: string;
+  backFooter: string;
+  backTitleSize: number;
+  backSubtitleSize: number;
+  backTitleColor: string;
   platformBadges: string[];
 };
 
 export const defaultPrintSettings: PrintSettings = {
-  title: "How was your experience?",
-  subtitle: "Scan to share your feedback. Your review helps local homeowners choose with confidence.",
+  title: "Please Leave Us a Review",
+  subtitle: "Your feedback helps our business grow. Scan the code, choose a review site, and share your experience.",
   phone: "(800) 794-7444",
   website: "yorkshireroofing.com",
   scanLabel: "Scan to review",
   titleSize: 37,
   subtitleSize: 17,
+  titleColor: "#e63946",
+  backTitle: "Thank You!",
+  backSubtitle: "We appreciate your business and the opportunity to serve you.",
+  backFooter: "We look forward to seeing you again.",
+  backTitleSize: 44,
+  backSubtitleSize: 18,
+  backTitleColor: "#155aa8",
   platformBadges: ["google", "yelp"],
 };
 
@@ -106,10 +141,13 @@ export const demoBusiness = {
   address: "7610 National Dr, Livermore, CA 94550",
   phone: "(800) 794-7444",
   logoUrl: "/brands/yorkshire-roofing.png",
+  iconUrl: "/brands/yorkshire-roofing-icon.png",
   accent: "#155aa8",
   accentSecondary: "#e63946",
   reviewUrl: "/r/yorkshire-roofing",
 };
+
+export const defaultBusinessBranding:BusinessBranding = { logoUrl:demoBusiness.logoUrl, iconUrl:demoBusiness.iconUrl, primaryColor:demoBusiness.accent, secondaryColor:demoBusiness.accentSecondary };
 
 export const demoDestinations: ReviewDestination[] = [
   {

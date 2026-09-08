@@ -21,13 +21,13 @@ export const syncCurrentUser = mutation({ args: {}, handler: async ctx => {
   const businessId = await ctx.db.insert("businesses", { organizationId, name: invitation.businessName, slug, primaryColor: "#B100FF", isPublished: false });
   await Promise.all([
     ctx.db.insert("funnelSettings", {
-      businessId, ratingHeadline: "How was your experience?", ratingSubtext: "Your feedback helps us serve you better. It only takes a few seconds.", positiveThreshold: 4,
+      businessId, showBusinessName: false, ratingHeadline: "How was your experience?", ratingSubtext: "Your feedback helps us serve you better. It only takes a few seconds.", positiveThreshold: 4,
       positiveHeadline: "Thank you so much!", positiveSubtext: "We're thrilled you had a great experience. Would you mind sharing it? It only takes a moment.", maybeLaterText: "Maybe later",
       completionHeadline: "Thanks for your feedback!", completionSubtext: "We truly appreciate you taking the time. You can close this window.",
       recoveryHeadline: "We're sorry we missed the mark", recoverySubtext: "Tell us what went wrong and we'll make it right. Your feedback goes straight to the owner.",
       nameLabel: "Your name", contactLabel: "Email or phone", messageLabel: "What went wrong?", submitText: "Send feedback privately", publicLinkText: "I prefer to post a public review",
     }),
-    ctx.db.insert("printCardSettings", { businessId, title: "How was your experience?", subtitle: "Scan to share your feedback.", phone: "", website: "", scanLabel: "Scan to review", titleSize: 37, subtitleSize: 17, platformBadges: ["google", "yelp"], additionalLogoStorageIds: [] }),
+    ctx.db.insert("printCardSettings", { businessId, title: "Please Leave Us a Review", subtitle: "Your feedback helps our business grow. Scan the code, choose a review site, and share your experience.", phone: "", website: "", scanLabel: "Scan to review", titleSize: 37, subtitleSize: 17, titleColor: "#B100FF", backTitle: "Thank You!", backSubtitle: "We appreciate your business and the opportunity to serve you.", backFooter: "We look forward to seeing you again.", backTitleSize: 44, backSubtitleSize: 18, backTitleColor: "#8e00cc", platformBadges: ["google", "yelp"], additionalLogoStorageIds: [] }),
     ctx.db.insert("embedSettings", { businessId, popupEnabled: true, popupPosition: "left", firstDelaySeconds: 10, rotationSeconds: 15, minimumRating: 4, wallEnabled: true, wallPageSize: 9 }),
   ]);
   await ctx.db.patch(invitation._id, { status: "accepted" });

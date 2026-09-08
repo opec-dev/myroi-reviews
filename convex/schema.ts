@@ -39,6 +39,7 @@ export default defineSchema({
     phone: v.optional(v.string()),
     address: v.optional(v.string()),
     logoStorageId: v.optional(v.id("_storage")),
+    iconStorageId: v.optional(v.id("_storage")),
     primaryColor: v.string(),
     secondaryColor: v.optional(v.string()),
     isPublished: v.boolean(),
@@ -69,6 +70,7 @@ export default defineSchema({
 
   funnelSettings: defineTable({
     businessId: v.id("businesses"),
+    showBusinessName: v.boolean(),
     ratingHeadline: v.string(),
     ratingSubtext: v.string(),
     positiveThreshold: v.number(),
@@ -106,8 +108,39 @@ export default defineSchema({
     scanLabel: v.string(),
     titleSize: v.number(),
     subtitleSize: v.number(),
+    titleColor: v.string(),
+    backTitle: v.string(),
+    backSubtitle: v.string(),
+    backFooter: v.string(),
+    backTitleSize: v.number(),
+    backSubtitleSize: v.number(),
+    backTitleColor: v.string(),
     platformBadges: v.array(v.string()),
     additionalLogoStorageIds: v.array(v.id("_storage")),
+  }).index("by_business", ["businessId"]),
+
+  resellerEmailSettings: defineTable({
+    ownerUserId: v.id("users"),
+    smtpHost: v.string(),
+    smtpPort: v.number(),
+    smtpUser: v.string(),
+    fromName: v.string(),
+    fromEmail: v.string(),
+    notificationEmail: v.optional(v.string()),
+    notifyPrivateFeedback: v.optional(v.boolean()),
+    notifyNewReviews: v.optional(v.boolean()),
+    notifyEmailFailures: v.optional(v.boolean()),
+    failureAlertEmail: v.optional(v.string()),
+    alertSmtpHost: v.optional(v.string()),
+    alertSmtpUser: v.optional(v.string()),
+    alertFromEmail: v.optional(v.string()),
+  }).index("by_owner", ["ownerUserId"]),
+
+  clientNotificationSettings: defineTable({
+    businessId: v.id("businesses"),
+    notificationEmail: v.string(),
+    notifyPrivateFeedback: v.boolean(),
+    notifyNewReviews: v.boolean(),
   }).index("by_business", ["businessId"]),
 
   reviews: defineTable({
@@ -157,4 +190,29 @@ export default defineSchema({
   })
     .index("by_business_time", ["businessId", "occurredAt"])
     .index("by_destination_time", ["destinationId", "occurredAt"]),
+
+  analyticsEvents: defineTable({
+    businessId: v.id("businesses"),
+    eventType: v.union(v.literal("funnel_view"),v.literal("qr_scan"),v.literal("rating_selected"),v.literal("private_feedback_submitted"),v.literal("destination_clicked"),v.literal("maybe_later"),v.literal("public_review_fallback")),
+    occurredAt: v.number(),
+    sessionId: v.string(),
+    source: v.optional(v.string()),
+    destinationId: v.optional(v.string()),
+    destinationName: v.optional(v.string()),
+    rating: v.optional(v.number()),
+  })
+    .index("by_business_time",["businessId","occurredAt"])
+    .index("by_business_type_time",["businessId","eventType","occurredAt"]),
+
+  emailDeliveryLogs: defineTable({
+    businessId: v.optional(v.id("businesses")),
+    kind: v.union(v.literal("private_feedback"),v.literal("new_review"),v.literal("admin_failure_alert"),v.literal("invitation")),
+    status: v.union(v.literal("sent"),v.literal("not_sent"),v.literal("failed")),
+    recipient: v.string(),
+    subject: v.string(),
+    error: v.optional(v.string()),
+    occurredAt: v.number(),
+  })
+    .index("by_business_time",["businessId","occurredAt"])
+    .index("by_status_time",["status","occurredAt"]),
 });

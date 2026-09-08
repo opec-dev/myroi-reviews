@@ -15,20 +15,20 @@ async function addCenterLogo(svg: string) {
 
   const size = Number(match[1]);
   const center = size / 2;
-  const whiteWidth = size * 0.28;
-  const whiteHeight = size * 0.13;
-  const logoWidth = size * 0.23;
-  const logoHeight = size * 0.085;
-  const logo = await readFile(path.join(process.cwd(), "public", "brands", "yorkshire-roofing.png"));
+  const whiteWidth = size * 0.27;
+  const whiteHeight = size * 0.27;
+  const logoWidth = size * 0.22;
+  const logoHeight = size * 0.22;
+  const logo = await readFile(path.join(process.cwd(), "public", "brands", "yorkshire-roofing-icon.png"));
   const dataUrl = `data:image/png;base64,${logo.toString("base64")}`;
-  const mark = `<g aria-label="${demoBusiness.name} logo"><rect x="${center - whiteWidth / 2}" y="${center - whiteHeight / 2}" width="${whiteWidth}" height="${whiteHeight}" rx="2" fill="#fff"/><image href="${dataUrl}" x="${center - logoWidth / 2}" y="${center - logoHeight / 2}" width="${logoWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/></g>`;
+  const mark = `<g aria-label="${demoBusiness.name} icon"><rect x="${center - whiteWidth / 2}" y="${center - whiteHeight / 2}" width="${whiteWidth}" height="${whiteHeight}" rx="3" fill="#fff"/><image href="${dataUrl}" x="${center - logoWidth / 2}" y="${center - logoHeight / 2}" width="${logoWidth}" height="${logoHeight}" preserveAspectRatio="xMidYMid meet"/></g>`;
   return svg.replace("</svg>", `${mark}</svg>`);
 }
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
-  const target = `${appOrigin}/r/${encodeURIComponent(slug)}`;
+  const target = `${appOrigin}/r/${encodeURIComponent(slug)}?src=qr`;
   const rawSvg = await QRCode.toString(target, {
     type: "svg",
     width: 600,

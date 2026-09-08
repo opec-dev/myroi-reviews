@@ -51,9 +51,13 @@ Give a local business one simple place to configure where customers can leave re
 - PNG and SVG download
 - Print-ready 3.5 × 2 inch business-card PDF with bleed and safe margins
 - Front design contains configurable business logo/name, title, subtitle, phone, website, QR caption, QR code, and type sizes
+- A separate square business icon is supported for QR centers and compact placements
+- Front headline color and size are configurable, with a prominent default “Please Leave Us a Review” message
+- Editable second/back side repeats the business logo and provides a professional thank-you headline, message, and footer
 - Separate built-in Google and Yelp review logos, each independently selectable, plus room for additional client or industry badges
 - Optional back design contains instructions or contact information
 - Admin-selectable templates with client-specific preview before export
+- Live front/back preview in the card editor
 
 ### Review library
 
@@ -91,6 +95,10 @@ Give a local business one simple place to configure where customers can leave re
 - Published review count
 - Popup and review-wall installation snippets
 - Recent outbound review-link clicks
+- Funnel visits, QR scans, rating choices, private-form completions, and destination clicks by client and timestamp
+- Review-link conversion rate and destination attribution
+- Email delivery audit with sent, not-sent, and failed states plus diagnostic messages
+- Reseller-level email health warning and optional failure alert through an independent SMTP provider
 
 ## Explicitly deferred
 
@@ -129,3 +137,5 @@ Give a local business one simple place to configure where customers can leave re
 9. The popup and wall display published reviews on an unrelated test page.
 10. Disabling a review or destination removes it from public output without changing embed code.
 11. Tenant authorization tests prove one business cannot access another business's data.
+12. QR visits are distinguishable from direct funnel visits and each external destination click is attributed.
+13. Every attempted notification creates a delivery-history record, including failures and disabled/not-configured outcomes.
