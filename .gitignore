@@ -10,3 +10,6 @@ out/
 coverage/
 *.tsbuildinfo
 .herenow/
+/dist/
+.vinext/
+.wrangler/
