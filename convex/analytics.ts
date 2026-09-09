@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { requireBusinessAccess, requireUser } from "./helpers";
 
 const eventType=v.union(v.literal("funnel_view"),v.literal("qr_scan"),v.literal("rating_selected"),v.literal("private_feedback_submitted"),v.literal("destination_clicked"),v.literal("maybe_later"),v.literal("public_review_fallback"));
-const emailKind=v.union(v.literal("private_feedback"),v.literal("new_review"),v.literal("admin_failure_alert"),v.literal("invitation"));
+const emailKind=v.union(v.literal("private_feedback"),v.literal("new_review"),v.literal("admin_failure_alert"),v.literal("invitation"),v.literal("smtp_test"));
 const emailStatus=v.union(v.literal("sent"),v.literal("not_sent"),v.literal("failed"));
 
 function verifySecret(secret:string){if(!process.env.ANALYTICS_INGEST_SECRET||secret!==process.env.ANALYTICS_INGEST_SECRET)throw new Error("Invalid ingest secret")}

@@ -206,7 +206,7 @@ export default defineSchema({
 
   emailDeliveryLogs: defineTable({
     businessId: v.optional(v.id("businesses")),
-    kind: v.union(v.literal("private_feedback"),v.literal("new_review"),v.literal("admin_failure_alert"),v.literal("invitation")),
+    kind: v.union(v.literal("private_feedback"),v.literal("new_review"),v.literal("admin_failure_alert"),v.literal("invitation"),v.literal("smtp_test")),
     status: v.union(v.literal("sent"),v.literal("not_sent"),v.literal("failed")),
     recipient: v.string(),
     subject: v.string(),

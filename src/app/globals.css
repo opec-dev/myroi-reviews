@@ -40,8 +40,8 @@
 /* Final print-card sizing: the screen preview is exactly twice the 3.5 x 2 inch printed card. */
 .setup-pending{color:var(--muted);font-size:12px;font-weight:700}
 .card-qr{gap:.025in}
-.qr-art>span{left:50%;top:50%;inset:50% auto auto 50%;width:.46in;height:.46in;padding:.02in;overflow:hidden}
-.qr-art>span img{width:132%!important;height:132%!important;max-width:none;object-position:center}
+.qr-art>span{left:50%;top:50%;inset:50% auto auto 50%;width:.48in;height:.48in;padding:.035in;overflow:hidden}
+.qr-art>span img{display:block;width:100%!important;height:100%!important;max-width:100%;object-fit:contain;object-position:center}
 .platform-logo-stack{width:1.75in;justify-items:center;gap:.025in}
 .platform-logo-stack>img{width:1.75in!important;height:.5in!important}
 .card-back{grid-template-columns:1fr 1fr;gap:.36in}
@@ -49,7 +49,7 @@
 .back-brand{display:grid;place-items:center;padding:.1in}
 .back-brand img{width:2.9in;max-width:100%;height:1.35in}
 @media print{
-  .qr-art>span{width:.23in;height:.23in;padding:.01in}
+  .qr-art>span{width:.24in;height:.24in;padding:.018in}
   .platform-logo-stack{width:.875in;gap:.012in}
   .platform-logo-stack>img{width:.875in!important;height:.25in!important}
   .card-back{grid-template-columns:1fr 1fr;gap:.18in}
@@ -62,6 +62,10 @@
 .system-health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.system-health-grid article{display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.system-health-grid span{color:var(--muted);font-size:12px;font-weight:750}.system-health-grid strong{font-size:28px}
 .notification-flow{display:flex;align-items:center;gap:16px;margin-top:20px;padding:15px 17px;border:1px solid #e5d4f2;border-radius:12px;background:#fcf8ff}.notification-flow span{display:grid;gap:3px}.notification-flow strong{color:#b100ff;font-size:22px}.notification-flow b{font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 @media(max-width:700px){.system-health-grid{grid-template-columns:1fr}.notification-flow{align-items:flex-start;flex-direction:column}.notification-flow>strong{transform:rotate(90deg)}}
+
+.client-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.client-actions a,.client-actions button{padding:0;border:0;color:#8e00cc;background:transparent;font:inherit;font-size:12px;font-weight:750;text-decoration:underline;cursor:pointer}.client-actions button:disabled{opacity:.55;cursor:wait}.client-actions .danger-link{color:#b42318}.client-row-note{grid-column:1/-1;margin-top:-7px;color:var(--muted)}.invite-delivery{display:block;margin-top:5px;font-size:10px;font-weight:750}.invite-delivery.sent{color:#087653}.invite-delivery.failed{color:#b42318}.invite-delivery.not_sent{color:#865500}.setup-status{display:inline-flex;width:max-content;padding:5px 9px;border-radius:999px;color:#5d3a91;background:#f0e8ff;font-size:12px;font-weight:800}.action-message,.runtime-status{margin:0 0 16px;padding:12px 14px;border:1px solid #e5d4f2;border-radius:10px;color:#5d356f;background:#fcf8ff}.field-help{display:block;margin-top:-5px;color:var(--muted)}
+.runtime-status{display:grid;gap:4px}.runtime-status span{color:var(--muted);font-size:13px}.smtp-test-card{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:18px 0 26px;padding:18px;border:1px solid #d9dfe9;border-radius:13px;background:#f8fafc}.smtp-test-card h3{margin:0 0 5px}.smtp-test-card p{margin:0;color:var(--muted)}.test-result{display:block;margin-top:10px;color:#5d356f;font-size:13px}
+@media(max-width:700px){.smtp-test-card{align-items:flex-start;flex-direction:column}.client-row-note{grid-column:1}.client-actions{align-items:flex-start;flex-direction:column}}
 
 .print-download-toolbar{display:flex;align-items:center;justify-content:space-between;gap:24px;width:7in;margin:0 0 24px;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 12px 32px #18284516}.print-download-toolbar>div:first-child{display:grid;gap:4px}.print-download-toolbar span{color:var(--muted);font-size:13px}.print-download-toolbar>div:last-child{display:flex;gap:10px}.print-download-toolbar button:disabled{opacity:.55;cursor:wait}
 @media print{.print-download-toolbar{display:none}}

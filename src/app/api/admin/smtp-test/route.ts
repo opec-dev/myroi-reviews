@@ -1,0 +1,51 @@
+import { NextResponse } from "next/server";
+import { createSmtpTransport, getSmtpStatus } from "@/lib/smtp";
+import { persistEmailLog } from "@/lib/server-events";
+
+export async function POST(request: Request) {
+  const requestOrigin = request.headers.get("origin");
+  if (requestOrigin && requestOrigin !== new URL(request.url).origin) {
+    return NextResponse.json({ error: "Cross-site SMTP tests are not allowed." }, { status: 403 });
+  }
+
+  const status = getSmtpStatus();
+  const recipient = status.testRecipient;
+  const subject = "myROI Reviews SMTP test";
+  if (!status.configured || !recipient) {
+    const missing = [...status.missing, ...(!recipient ? ["SMTP_TEST_TO or SMTP_FAILURE_ALERT_TO"] : [])];
+    await logTest({ status: "not_sent", recipient, subject, error: `Missing Worker variables: ${missing.join(", ")}` });
+    return NextResponse.json({ error: "SMTP test is not fully configured.", missing }, { status: 503 });
+  }
+
+  try {
+    const transport = createSmtpTransport();
+    await transport.verify();
+    const result = await transport.sendMail({
+      from: { name: process.env.SMTP_FROM_NAME ?? "myROIagency Reviews", address: process.env.SMTP_FROM_EMAIL! },
+      to: recipient,
+      subject,
+      text: `The myROI Reviews Worker connected to the master email service and sent this test successfully.\n\nTime: ${new Date().toISOString()}`,
+    });
+    await logTest({ status: "sent", recipient, subject });
+    return NextResponse.json({ sent: true, recipient: maskEmail(recipient), messageId: result.messageId });
+  } catch (error) {
+    const problem = sanitizeSmtpError(error);
+    await logTest({ status: "failed", recipient, subject, error: problem });
+    return NextResponse.json({ sent: false, recipient: maskEmail(recipient), error: problem }, { status: 502 });
+  }
+}
+
+async function logTest(input: { status: "sent" | "not_sent" | "failed"; recipient: string; subject: string; error?: string }) {
+  try { await persistEmailLog({ ...input, kind: "smtp_test", occurredAt: Date.now() }); } catch { /* Diagnostics must still be returned when logging is unavailable. */ }
+}
+
+function maskEmail(value: string) {
+  const [name, domain] = value.split("@");
+  if (!domain) return "configured recipient";
+  return `${name.slice(0, 2)}***@${domain}`;
+}
+
+function sanitizeSmtpError(error: unknown) {
+  if (!(error instanceof Error)) return "SMTP connection or delivery failed.";
+  return error.message.replace(/(pass(?:word)?|token|secret)=?\s*[^\s,;]+/gi, "$1=[redacted]").slice(0, 500);
+}
