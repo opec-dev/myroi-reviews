@@ -40,8 +40,8 @@
 /* Final print-card sizing: the screen preview is exactly twice the 3.5 x 2 inch printed card. */
 .setup-pending{color:var(--muted);font-size:12px;font-weight:700}
 .card-qr{gap:.025in}
-.qr-art>span{left:50%;top:50%;inset:50% auto auto 50%;width:.48in;height:.48in;padding:.035in;overflow:hidden}
-.qr-art>span img{display:block;width:100%!important;height:100%!important;max-width:100%;object-fit:contain;object-position:center}
+.qr-art>span{left:50%;top:50%;inset:50% auto auto 50%;box-sizing:border-box;width:.48in;height:.48in;padding:0;overflow:hidden}
+.qr-art>span img{position:absolute;inset:.035in;display:block;width:calc(100% - .07in)!important;height:calc(100% - .07in)!important;max-width:none;object-fit:contain;object-position:center}
 .platform-logo-stack{width:1.75in;justify-items:center;gap:.025in}
 .platform-logo-stack>img{width:1.75in!important;height:.5in!important}
 .card-back{grid-template-columns:1fr 1fr;gap:.36in}
@@ -49,7 +49,8 @@
 .back-brand{display:grid;place-items:center;padding:.1in}
 .back-brand img{width:2.9in;max-width:100%;height:1.35in}
 @media print{
-  .qr-art>span{width:.24in;height:.24in;padding:.018in}
+  .qr-art>span{width:.24in;height:.24in;padding:0}
+  .qr-art>span img{inset:.018in;width:calc(100% - .036in)!important;height:calc(100% - .036in)!important}
   .platform-logo-stack{width:.875in;gap:.012in}
   .platform-logo-stack>img{width:.875in!important;height:.25in!important}
   .card-back{grid-template-columns:1fr 1fr;gap:.18in}
