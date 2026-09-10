@@ -26,13 +26,15 @@ async function createBusiness(ctx: MutationCtx, ownerUserId: Id<"users">, name: 
   return { organizationId, businessId, slug };
 }
 
-export const syncCurrentUser = mutation({ args: {}, handler: async ctx => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Authentication required");
+async function provisionUser(ctx: MutationCtx, identity: { subject: string; name?: string }, emailValue: string, displayName?: string) {
+  const email = emailValue.trim().toLowerCase();
   const current = await ctx.db.query("users").withIndex("by_auth_subject", q => q.eq("authSubject", identity.subject)).unique();
-  const email = String(identity.email ?? "").toLowerCase();
-  const values = { email, displayName: identity.name, isPlatformAdmin: isPlatformAdmin(email) };
-  if (current) { await ctx.db.patch(current._id, values); return current._id; }
+  const values = { email, displayName: displayName ?? identity.name, isPlatformAdmin: isPlatformAdmin(email) };
+  if (current) {
+    await ctx.db.patch(current._id, values);
+    return current._id;
+  }
+
   const userId = await ctx.db.insert("users", { authSubject: identity.subject, ...values });
   const invitation = await ctx.db.query("pendingInvitations").withIndex("by_email", q => q.eq("email", email)).filter(q => q.eq(q.field("status"), "pending")).first();
   if (!invitation) return userId;
@@ -43,7 +45,37 @@ export const syncCurrentUser = mutation({ args: {}, handler: async ctx => {
   await ctx.db.insert("memberships", { organizationId: organizationId!, userId, role: "owner" });
   await ctx.db.patch(invitation._id, { status: "accepted" });
   return userId;
+}
+
+async function secretsMatch(provided: string, expected: string) {
+  const encoder = new TextEncoder();
+  const [providedDigest, expectedDigest] = await Promise.all([
+    crypto.subtle.digest("SHA-256", encoder.encode(provided)),
+    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
+  ]);
+  const left = new Uint8Array(providedDigest);
+  const right = new Uint8Array(expectedDigest);
+  let difference = 0;
+  for (let index = 0; index < left.length; index++) difference |= left[index] ^ right[index];
+  return difference === 0;
+}
+
+export const syncCurrentUser = mutation({ args: {}, handler: async ctx => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Authentication required");
+  return await provisionUser(ctx, identity, String(identity.email ?? ""));
 }});
+
+export const syncCurrentUserFromServer = mutation({
+  args: { email: v.string(), displayName: v.optional(v.string()), provisioningSecret: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required");
+    const expected = process.env.ANALYTICS_INGEST_SECRET;
+    if (!expected || !(await secretsMatch(args.provisioningSecret, expected))) throw new Error("Provisioning authorization failed");
+    return await provisionUser(ctx, identity, args.email, args.displayName);
+  },
+});
 
 export const current = query({ args: {}, handler: async ctx => {
   const identity = await ctx.auth.getUserIdentity();

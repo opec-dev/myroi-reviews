@@ -2,8 +2,7 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AuthKitProvider, useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
-import { ConvexProvider, ConvexProviderWithAuth, ConvexReactClient, useConvexAuth, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { ConvexProvider, ConvexProviderWithAuth, ConvexReactClient, useConvexAuth } from "convex/react";
 
 export function AppAuthProvider({ children, enabled }: { children: ReactNode; enabled: boolean }) {
   return enabled ? <ConnectedProviders>{children}</ConnectedProviders> : <PublicConvexProvider>{children}</PublicConvexProvider>;
@@ -20,8 +19,8 @@ function ConnectedProviders({ children }: { children: ReactNode }) {
 }
 
 function AccountBootstrap({children}:{children:ReactNode}){
-  const {isAuthenticated}=useConvexAuth();const sync=useMutation(api.accounts.syncCurrentUser);const started=useRef(false);
-  useEffect(()=>{if(!isAuthenticated||started.current)return;started.current=true;void sync().catch(()=>{started.current=false})},[isAuthenticated,sync]);
+  const {isAuthenticated}=useConvexAuth();const started=useRef(false);
+  useEffect(()=>{if(!isAuthenticated||started.current)return;started.current=true;void fetch("/api/auth/bootstrap",{method:"POST"}).then(response=>{if(!response.ok)throw new Error("Account provisioning failed")}).catch(()=>{started.current=false})},[isAuthenticated]);
   return children;
 }
 
