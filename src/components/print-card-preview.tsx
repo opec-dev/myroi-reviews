@@ -1,28 +1,36 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
-import { businessBrandingStorageKey, defaultBusinessBranding, defaultPrintSettings, demoBusiness, PrintSettings, printSettingsStorageKey, type BusinessBranding } from "@/lib/demo-data";
+import { CSSProperties, useState } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { defaultBusinessBranding, defaultPrintSettings, demoBusiness, PrintSettings, type BusinessBranding } from "@/lib/demo-data";
 
 const EXPORT_WIDTH = 1125;
 const EXPORT_HEIGHT = 675;
 
 export function PrintCardPreview({ slug, qrSuffix }: { slug: string; qrSuffix: string }) {
-  const [settings, setSettings] = useState(defaultPrintSettings);
+  const card = useQuery(api.printCards.publicBySlug, { slug });
   const [exporting,setExporting] = useState<"front"|"back"|"pdf"|null>(null);
-  useEffect(() => { const value = localStorage.getItem(printSettingsStorageKey); if (value) try { const stored = JSON.parse(value) as PrintSettings; const badges = stored.platformBadges?.includes("google-yelp") ? [...stored.platformBadges.filter(id => id !== "google-yelp"), "google", "yelp"] : stored.platformBadges; const migrated = { ...stored, ...(stored.title === "How was your experience?" ? { title:defaultPrintSettings.title } : {}), ...(stored.subtitle === "Scan to share your feedback. It only takes a minute." ? { subtitle:defaultPrintSettings.subtitle } : {}) }; setSettings({ ...defaultPrintSettings, ...migrated, ...(badges ? { platformBadges: [...new Set(badges)] } : {}) }); } catch {} }, []);
-  function branding():BusinessBranding { const value=localStorage.getItem(businessBrandingStorageKey); if(value)try{return {...defaultBusinessBranding,...JSON.parse(value)}}catch{} return defaultBusinessBranding }
-  async function render(face:"front"|"back") { return drawPrintCard(face,settings,branding(),`/api/qr/${slug}${qrSuffix}`) }
+  if (card === undefined) return <p className="print-status">Loading printer-ready artwork…</p>;
+  if (card === null) return <p className="print-status">This client’s print card is not published.</p>;
+  const settings:PrintSettings = { ...defaultPrintSettings, ...(card.settings ?? {}) };
+  const branding:BusinessBranding = {
+    logoUrl: card.business.logoUrl ?? defaultBusinessBranding.logoUrl,
+    iconUrl: card.business.iconUrl ?? defaultBusinessBranding.iconUrl,
+    primaryColor: card.business.primaryColor,
+    secondaryColor: card.business.secondaryColor ?? card.business.primaryColor,
+  };
+  async function render(face:"front"|"back") { return drawPrintCard(face,settings,branding,`/api/qr/${slug}${qrSuffix}`) }
   function download(dataUrl:string,name:string){const link=document.createElement("a");link.href=dataUrl;link.download=name;link.click()}
   async function downloadPng(face:"front"|"back"){setExporting(face);try{download((await render(face)).toDataURL("image/png"),`${slug}-review-card-${face}-300dpi.png`)}finally{setExporting(null)}}
   async function downloadPdf(){setExporting("pdf");try{const [front,back]=await Promise.all([render("front"),render("back")]);const blob=buildImagePdf([front,back]);const url=URL.createObjectURL(blob);download(url,`${slug}-review-card-front-back-300dpi.pdf`);setTimeout(()=>URL.revokeObjectURL(url),1000)}finally{setExporting(null)}}
-  return <><section className="print-download-toolbar"><div><strong>Printer-ready files</strong><span>3.75 × 2.25 inches with 0.125-inch bleed at 300 DPI. The PDF uses CMYK color; no crop marks.</span></div><div><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("front")}>{exporting==="front"?"Preparing…":"Front PNG"}</button><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("back")}>{exporting==="back"?"Preparing…":"Back PNG"}</button><button className="button primary" disabled={Boolean(exporting)} onClick={downloadPdf}>{exporting==="pdf"?"Preparing PDF…":"2-page PDF"}</button></div></section><div className="print-sheet"><div><span>Front</span><CardArtwork face="front" settings={settings} slug={slug} qrSuffix={qrSuffix} /></div><div className="print-break"><span>Back</span><CardArtwork face="back" settings={settings} slug={slug} qrSuffix={qrSuffix} /></div></div></>;
+  return <><section className="print-download-toolbar"><div><strong>Printer-ready files</strong><span>3.75 × 2.25 inches with 0.125-inch bleed at 300 DPI. The PDF uses CMYK color; no crop marks.</span></div><div><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("front")}>{exporting==="front"?"Preparing…":"Front PNG"}</button><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("back")}>{exporting==="back"?"Preparing…":"Back PNG"}</button><button className="button primary" disabled={Boolean(exporting)} onClick={downloadPdf}>{exporting==="pdf"?"Preparing PDF…":"2-page PDF"}</button></div></section><div className="print-sheet"><div><span>Front</span><CardArtwork face="front" settings={settings} branding={branding} businessName={card.business.name} slug={slug} qrSuffix={qrSuffix} /></div><div className="print-break"><span>Back</span><CardArtwork face="back" settings={settings} branding={branding} businessName={card.business.name} slug={slug} qrSuffix={qrSuffix} /></div></div></>;
 }
 
-export function CardArtwork({ face, settings, slug = demoBusiness.slug, qrSuffix = ".svg", compact = false }: { face:"front"|"back"; settings:PrintSettings; slug?:string; qrSuffix?:string; compact?:boolean }) {
-  const [branding,setBranding]=useState(defaultBusinessBranding); useEffect(()=>{const load=()=>{const value=localStorage.getItem(businessBrandingStorageKey);if(value)try{setBranding({...defaultBusinessBranding,...JSON.parse(value)})}catch{}};load();window.addEventListener("myroi-branding-updated",load);return()=>window.removeEventListener("myroi-branding-updated",load)},[]);
+export function CardArtwork({ face, settings, branding = defaultBusinessBranding, businessName = demoBusiness.name, slug = demoBusiness.slug, qrSuffix = ".svg", compact = false }: { face:"front"|"back"; settings:PrintSettings; branding?:BusinessBranding; businessName?:string; slug?:string; qrSuffix?:string; compact?:boolean }) {
   const style = { "--card-title-scale": settings.titleSize / 37, "--card-subtitle-scale": settings.subtitleSize / 17, "--card-title-color": settings.titleColor, "--card-back-title-scale": settings.backTitleSize / 44, "--card-back-subtitle-scale": settings.backSubtitleSize / 18, "--card-back-title-color": settings.backTitleColor, "--client-primary": branding.primaryColor, "--client-secondary": branding.secondaryColor } as CSSProperties;
-  if (face === "back") return <section className={`review-card card-back ${compact ? "compact-card" : ""}`} style={style}><div className="back-brand"><img src={branding.logoUrl} alt={`${demoBusiness.name} logo`} /></div><div className="back-message"><h1>{settings.backTitle}</h1><p>{settings.backSubtitle}</p><small>{settings.backFooter}</small></div></section>;
-  return <section className={`review-card ${compact ? "compact-card" : ""}`} style={style} aria-label={`${demoBusiness.name} review request card`}><div className="review-card-grid"><div className="review-card-copy"><img src={branding.logoUrl} alt={`${demoBusiness.name} logo`} /><h1>{settings.title}</h1><p>{settings.subtitle}</p><div className="contact-lines"><span>{settings.phone}</span><span>{settings.website}</span></div></div><div className="card-qr"><div className="qr-art"><img src={`/api/qr/${slug}${qrSuffix}`} alt="QR code with business icon to leave a review" /><span><img src={branding.iconUrl} alt="" /></span></div><strong>{settings.scanLabel}</strong><div className="platform-logo-stack">{settings.platformBadges.includes("google") && <img src="/brands/review-us-google.svg" alt="Review us on Google" />}{settings.platformBadges.includes("yelp") && <img src="/brands/review-us-yelp.svg" alt="Review us on Yelp" />}</div></div></div></section>;
+  if (face === "back") return <section className={`review-card card-back ${compact ? "compact-card" : ""}`} style={style}><div className="back-brand"><img src={branding.logoUrl} alt={`${businessName} logo`} /></div><div className="back-message"><h1>{settings.backTitle}</h1><p>{settings.backSubtitle}</p><small>{settings.backFooter}</small></div></section>;
+  return <section className={`review-card ${compact ? "compact-card" : ""}`} style={style} aria-label={`${businessName} review request card`}><div className="review-card-grid"><div className="review-card-copy"><img src={branding.logoUrl} alt={`${businessName} logo`} /><h1>{settings.title}</h1><p>{settings.subtitle}</p><div className="contact-lines"><span>{settings.phone}</span><span>{settings.website}</span></div></div><div className="card-qr"><div className="qr-art"><img src={`/api/qr/${slug}${qrSuffix}`} alt="QR code to leave a review" /></div><strong>{settings.scanLabel}</strong><div className="platform-logo-stack">{settings.platformBadges.includes("google") && <img src="/brands/review-us-google.svg" alt="Review us on Google" />}{settings.platformBadges.includes("yelp") && <img src="/brands/review-us-yelp.svg" alt="Review us on Yelp" />}</div></div></div></section>;
 }
 
 async function loadImage(src:string){return new Promise<HTMLImageElement>((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error(`Could not load ${src}`));image.src=src})}

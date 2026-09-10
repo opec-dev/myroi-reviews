@@ -1,17 +1,28 @@
 "use client";
 
-import { ReactNode, useCallback, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AuthKitProvider, useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
-import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import { ConvexProvider, ConvexProviderWithAuth, ConvexReactClient, useConvexAuth, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export function AppAuthProvider({ children, enabled }: { children: ReactNode; enabled: boolean }) {
-  if (!enabled) return children;
-  return <ConnectedProviders>{children}</ConnectedProviders>;
+  return enabled ? <ConnectedProviders>{children}</ConnectedProviders> : <PublicConvexProvider>{children}</PublicConvexProvider>;
+}
+
+function PublicConvexProvider({ children }: { children: ReactNode }) {
+  const [convex] = useState(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!));
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
 
 function ConnectedProviders({ children }: { children: ReactNode }) {
   const [convex] = useState(() => new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!));
-  return <AuthKitProvider><ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}>{children}</ConvexProviderWithAuth></AuthKitProvider>;
+  return <AuthKitProvider><ConvexProviderWithAuth client={convex} useAuth={useAuthFromAuthKit}><AccountBootstrap>{children}</AccountBootstrap></ConvexProviderWithAuth></AuthKitProvider>;
+}
+
+function AccountBootstrap({children}:{children:ReactNode}){
+  const {isAuthenticated}=useConvexAuth();const sync=useMutation(api.accounts.syncCurrentUser);const started=useRef(false);
+  useEffect(()=>{if(!isAuthenticated||started.current)return;started.current=true;void sync().catch(()=>{started.current=false})},[isAuthenticated,sync]);
+  return children;
 }
 
 function useAuthFromAuthKit() {

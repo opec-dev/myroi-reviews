@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSmtpTransport, getSmtpStatus } from "@/lib/smtp";
 import { persistEmailLog } from "@/lib/server-events";
+import { withAuth } from "@workos-inc/authkit-nextjs";
 
 export async function POST(request: Request) {
+  try { const {user}=await withAuth({ensureSignedIn:true});const admins=(process.env.PLATFORM_ADMIN_EMAILS??"").split(",").map(value=>value.trim().toLowerCase());if(!admins.includes(user.email.toLowerCase()))return NextResponse.json({error:"Administrator access required."},{status:403}); }
+  catch { return NextResponse.json({error:"Secure administrator sign-in is required."},{status:401}); }
   const requestOrigin = request.headers.get("origin");
   if (requestOrigin && requestOrigin !== new URL(request.url).origin) {
     return NextResponse.json({ error: "Cross-site SMTP tests are not allowed." }, { status: 403 });

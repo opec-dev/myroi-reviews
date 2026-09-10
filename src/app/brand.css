@@ -11,9 +11,10 @@
 
 .sidebar {
   padding: 24px 20px;
-  color: #e6e6e6;
-  background: #000000;
-  border-right: 1px solid #272029;
+  color: #2b2331;
+  background: #ffffff;
+  border-right: 1px solid #e8e1eb;
+  box-shadow: 8px 0 28px #2c123d0a;
 }
 
 .platform-brand {
@@ -47,11 +48,12 @@
 
 .platform-brand.compact { margin: 0; }
 .platform-brand.compact img { width: 64px; height: 52px; }
-.sidebar nav a { color: #bdb5c2; }
+.sidebar nav a { color: #4f4655; }
 .sidebar nav a:hover,
-.sidebar nav a.active { color: #ffffff; background: linear-gradient(90deg, #b100ff38, #b100ff12); }
-.sidebar nav a.active { box-shadow: inset 3px 0 #b100ff; }
-.sidebar nav .admin-nav-link { margin-top: 18px; border: 1px solid #ffffff18; }
+.sidebar nav a.active { color: #ffffff; background: linear-gradient(90deg, #8e00cc, #b100ff); }
+.sidebar nav a:hover { color: #8e00cc; background: #f8efff; }
+.sidebar nav a.active { box-shadow: 0 8px 22px #b100ff24; }
+.sidebar nav .admin-nav-link { margin-top: 18px; border: 1px solid #e8d5f2; }
 .sidebar .platform-brand { gap: 8px; }
 .sidebar .platform-brand span { display: none; }
 .topbar { box-shadow: 0 1px 0 #b100ff0a; }

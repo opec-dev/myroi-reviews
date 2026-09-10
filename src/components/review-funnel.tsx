@@ -1,23 +1,21 @@
 "use client";
 
 import { CSSProperties, FormEvent, useEffect, useRef, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import {
   defaultFunnelSettings,
   defaultBusinessBranding,
-  businessBrandingStorageKey,
-  demoBusiness,
   demoDestinations,
-  destinationStorageKey,
   FunnelSettings,
-  funnelSettingsStorageKey,
-  privateFeedbackStorageKey,
   ReviewDestination,
 } from "@/lib/demo-data";
 import { recordPilotEmail, trackPilotEvent } from "@/lib/pilot-tracking";
 
 type Stage = "rating" | "positive" | "recovery" | "complete";
 
-export function ReviewFunnel() {
+export function ReviewFunnel({slug}:{slug:string}) {
+  const connected=useQuery(api.funnel.publicBySlug,{slug});const saveFeedback=useMutation(api.funnel.submitPrivateFeedback);
   const [stage, setStage] = useState<Stage>("rating");
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
@@ -27,42 +25,38 @@ export function ReviewFunnel() {
   const trackedView = useRef(false);
 
   useEffect(() => {
-    const funnel = localStorage.getItem(funnelSettingsStorageKey);
-    const sites = localStorage.getItem(destinationStorageKey);
-    const brand = localStorage.getItem(businessBrandingStorageKey);
-    if (funnel) try { setSettings({ ...defaultFunnelSettings, ...JSON.parse(funnel) }); } catch { /* use defaults */ }
-    if (sites) try { setDestinations(JSON.parse(sites)); } catch { /* use defaults */ }
-    if (brand) try { setBranding({ ...defaultBusinessBranding, ...JSON.parse(brand) }); } catch { /* use defaults */ }
-    if(!trackedView.current){trackedView.current=true;const source=new URLSearchParams(window.location.search).get("src")??"direct";trackPilotEvent({businessSlug:demoBusiness.slug,type:"funnel_view",source});if(source==="qr")trackPilotEvent({businessSlug:demoBusiness.slug,type:"qr_scan",source})}
-  }, []);
+    if(!connected)return;
+    if(connected.funnel)setSettings({...defaultFunnelSettings,...connected.funnel});
+    setBranding({logoUrl:connected.business.logoUrl||defaultBusinessBranding.logoUrl,iconUrl:connected.business.iconUrl||defaultBusinessBranding.iconUrl,primaryColor:connected.business.primaryColor,secondaryColor:connected.business.secondaryColor||connected.business.primaryColor});
+    setDestinations(connected.destinations.map(row=>({id:row._id,provider:row.provider,name:row.label,reviewUrl:row.reviewUrl,profileUrl:row.profileUrl,color:row.provider==="google"?"#4285f4":row.provider==="yelp"?"#d32323":"#6857d9",enabled:row.isEnabled})) as ReviewDestination[]);
+    if(!trackedView.current){trackedView.current=true;const source=new URLSearchParams(window.location.search).get("src")??"direct";trackPilotEvent({businessSlug:slug,type:"funnel_view",source});if(source==="qr")trackPilotEvent({businessSlug:slug,type:"qr_scan",source})}
+  }, [connected,slug]);
 
   function chooseRating(value: number) {
     setRating(value);
-    trackPilotEvent({businessSlug:demoBusiness.slug,type:"rating_selected",rating:value});
+    trackPilotEvent({businessSlug:slug,type:"rating_selected",rating:value});
     setStage(value >= settings.positiveThreshold ? "positive" : "recovery");
   }
 
   async function submitPrivateFeedback(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const previous = JSON.parse(localStorage.getItem(privateFeedbackStorageKey) ?? "[]");
-    const entry = { rating, name: data.get("name"), contact: data.get("contact"), message: data.get("message"), business: demoBusiness.name, slug: demoBusiness.slug, createdAt: new Date().toISOString() };
-    previous.push(entry);
-    localStorage.setItem(privateFeedbackStorageKey, JSON.stringify(previous));
-    trackPilotEvent({businessSlug:demoBusiness.slug,type:"private_feedback_submitted",rating});
-    const recipient=String(data.get("contact")); const subject=`Private ${rating}-star feedback for ${demoBusiness.name}`;
+    const entry = { rating, name: String(data.get("name")||"")||undefined, contact: String(data.get("contact")), message: String(data.get("message")), business: connected?.business.name??slug, slug, createdAt: new Date().toISOString() };
+    await saveFeedback({slug,rating,name:entry.name,contact:entry.contact,message:entry.message});
+    trackPilotEvent({businessSlug:slug,type:"private_feedback_submitted",rating});
+    const recipient=entry.contact; const subject=`Private ${rating}-star feedback for ${entry.business}`;
     try {
       const response=await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(entry) });
       const result=await response.json() as {notified?:boolean;recipient?:string;reason?:string;error?:string};
-      recordPilotEmail({businessSlug:demoBusiness.slug,kind:"private_feedback",status:result.notified?"sent":response.ok?"not_sent":"failed",recipient:result.recipient||recipient,subject,error:result.reason??result.error});
-    } catch { recordPilotEmail({businessSlug:demoBusiness.slug,kind:"private_feedback",status:"failed",recipient,subject,error:"Delivery endpoint unavailable"}); }
+      recordPilotEmail({businessSlug:slug,kind:"private_feedback",status:result.notified?"sent":response.ok?"not_sent":"failed",recipient:result.recipient||recipient,subject,error:result.reason??result.error});
+    } catch { recordPilotEmail({businessSlug:slug,kind:"private_feedback",status:"failed",recipient,subject,error:"Delivery endpoint unavailable"}); }
     setStage("complete");
   }
 
   return <main className="public-page" style={{ "--primary": branding.primaryColor } as CSSProperties}>
     <section className="review-funnel">
-      <div className="logo-lockup"><img src={branding.logoUrl} alt={`${demoBusiness.name} logo`} /></div>
-      {settings.showBusinessName && <strong className="funnel-business-name">{demoBusiness.name}</strong>}
+      <div className="logo-lockup"><img src={branding.logoUrl} alt={`${connected?.business.name??slug} logo`} /></div>
+      {settings.showBusinessName && <strong className="funnel-business-name">{connected?.business.name??slug}</strong>}
 
       {stage === "rating" && <div className="funnel-stage">
         <h1>{settings.ratingHeadline}</h1><p>{settings.ratingSubtext}</p>
@@ -74,8 +68,8 @@ export function ReviewFunnel() {
 
       {stage === "positive" && <div className="funnel-stage">
         <div className="success-mark">♥</div><h1>{settings.positiveHeadline}</h1><p>{settings.positiveSubtext}</p>
-        <div className="review-buttons">{destinations.filter((item) => item.enabled).map((destination) => <a href={destination.reviewUrl} key={destination.id} target="_blank" rel="noopener noreferrer" onClick={()=>trackPilotEvent({businessSlug:demoBusiness.slug,type:"destination_clicked",destinationId:destination.id,destinationName:destination.name,source:new URLSearchParams(window.location.search).get("src")??"direct",rating})}><span className="source-icon" style={{ background: destination.color }}>{destination.name[0]}</span>Review us on {destination.name}<b>↗</b></a>)}</div>
-        <button className="quiet-button" onClick={() => {trackPilotEvent({businessSlug:demoBusiness.slug,type:"maybe_later",rating});setStage("complete")}}>{settings.maybeLaterText}</button>
+        <div className="review-buttons">{destinations.filter((item) => item.enabled).map((destination) => <a href={destination.reviewUrl} key={destination.id} target="_blank" rel="noopener noreferrer" onClick={()=>trackPilotEvent({businessSlug:slug,type:"destination_clicked",destinationId:destination.id,destinationName:destination.name,source:new URLSearchParams(window.location.search).get("src")??"direct",rating})}><span className="source-icon" style={{ background: destination.color }}>{destination.name[0]}</span>Review us on {destination.name}<b>↗</b></a>)}</div>
+        <button className="quiet-button" onClick={() => {trackPilotEvent({businessSlug:slug,type:"maybe_later",rating});setStage("complete")}}>{settings.maybeLaterText}</button>
       </div>}
 
       {stage === "recovery" && <div className="funnel-stage recovery-stage">
@@ -86,7 +80,7 @@ export function ReviewFunnel() {
           <label>{settings.messageLabel}<textarea name="message" placeholder="Tell us what happened and how we can make it right..." required /></label>
           <button className="button primary" type="submit">{settings.submitText}</button>
         </form>
-        <button className="quiet-button public-review-link" onClick={() => {trackPilotEvent({businessSlug:demoBusiness.slug,type:"public_review_fallback",rating});setStage("positive")}}>{settings.publicLinkText}</button>
+        <button className="quiet-button public-review-link" onClick={() => {trackPilotEvent({businessSlug:slug,type:"public_review_fallback",rating});setStage("positive")}}>{settings.publicLinkText}</button>
       </div>}
 
       {stage === "complete" && <div className="funnel-stage completion-stage">

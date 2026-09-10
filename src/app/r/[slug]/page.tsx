@@ -6,6 +6,6 @@ export function generateStaticParams() {
 }
 
 export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
-  await params;
-  return <ReviewFunnel />;
+  const {slug}=await params;
+  return <ReviewFunnel slug={slug} />;
 }

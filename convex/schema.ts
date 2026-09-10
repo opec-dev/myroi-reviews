@@ -20,6 +20,8 @@ export default defineSchema({
     invitedByUserId: v.id("users"),
     status: v.union(v.literal("pending"), v.literal("accepted"), v.literal("revoked")),
     workosInvitationId: v.optional(v.string()),
+    organizationId: v.optional(v.id("organizations")),
+    businessId: v.optional(v.id("businesses")),
   }).index("by_email", ["email"]),
 
   memberships: defineTable({
@@ -134,6 +136,15 @@ export default defineSchema({
     alertSmtpHost: v.optional(v.string()),
     alertSmtpUser: v.optional(v.string()),
     alertFromEmail: v.optional(v.string()),
+  }).index("by_owner", ["ownerUserId"]),
+
+  resellerSettings: defineTable({
+    ownerUserId: v.id("users"),
+    businessName: v.string(),
+    supportEmail: v.string(),
+    website: v.string(),
+    logoStorageId: v.optional(v.id("_storage")),
+    iconStorageId: v.optional(v.id("_storage")),
   }).index("by_owner", ["ownerUserId"]),
 
   clientNotificationSettings: defineTable({

@@ -8,7 +8,8 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Secure administrator sign-in is required before an invitation can be emailed." }, { status: 401 });
   }
-  if (user.email.toLowerCase() !== "support-team@myroiagency.com") {
+  const admins=(process.env.PLATFORM_ADMIN_EMAILS??"oliver@sicconsulting.com,support-team@myroiagency.com").split(",").map(value=>value.trim().toLowerCase());
+  if (!admins.includes(user.email.toLowerCase())) {
     return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
   }
   const body = await request.json() as { action?: "send" | "resend" | "revoke"; email?: string; businessName?: string; invitationId?: string };

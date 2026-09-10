@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { pilotClientsStorageKey } from "@/lib/demo-data";
 import { recordPilotEmail } from "@/lib/pilot-tracking";
 
@@ -115,12 +116,15 @@ function ConnectedAdminClients() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const syncCurrentUser = useMutation(api.accounts.syncCurrentUser);
   const recordInvitation = useMutation(api.accounts.recordInvitation);
+  const updateInvitation = useMutation(api.accounts.updateInvitation);
+  const removePendingClient = useMutation(api.accounts.removePendingClient);
   const synced = useRef(false);
   const currentUser = useQuery(api.accounts.current, isAuthenticated ? {} : "skip");
   const data = useQuery(api.accounts.listClients, currentUser?.isPlatformAdmin ? {} : "skip");
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [busyId,setBusyId]=useState("");const[message,setMessage]=useState("");
 
   useEffect(() => { if (!isAuthenticated || synced.current) return; synced.current = true; void syncCurrentUser().catch(() => { synced.current = false; }); }, [isAuthenticated, syncCurrentUser]);
 
@@ -134,10 +138,13 @@ function ConnectedAdminClients() {
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Invitation failed."); } finally { setSubmitting(false); }
   }
 
+  async function resend(client:Client){setBusyId(client.id);setMessage("");try{const response=await fetch("/api/admin/invitations",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:client.workosInvitationId?"resend":"send",invitationId:client.workosInvitationId,businessName:client.business,email:client.email})});const result=await response.json() as {invitationId?:string;error?:string};if(!response.ok||!result.invitationId)throw new Error(result.error??"Invitation failed.");await updateInvitation({invitationId:client.id as Id<"pendingInvitations">,workosInvitationId:result.invitationId,status:"pending"});setMessage(`Invitation sent to ${client.email}.`)}catch(error){setMessage(error instanceof Error?error.message:"Invitation failed.")}finally{setBusyId("")}}
+  async function remove(client:Client){if(!window.confirm(`Remove the pending ${client.business} account and its setup data?`))return;setBusyId(client.id);try{if(client.workosInvitationId)await fetch("/api/admin/invitations",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"revoke",invitationId:client.workosInvitationId})});await removePendingClient({invitationId:client.id as Id<"pendingInvitations">});setMessage(`${client.business} was removed.`)}catch(error){setMessage(error instanceof Error?error.message:"The client could not be removed.")}finally{setBusyId("")}}
+
   if (isLoading || currentUser === undefined) return <div className="empty-state">Loading secure administrator workspace…</div>;
   if (!currentUser?.isPlatformAdmin) return <div className="form-error">This account does not have platform-administrator access.</div>;
-  const clients: Client[] = data ? [...data.businesses.map(business => ({ id: business._id, business: business.name, email: "Client owner", status: "Active" as const, workspaceHref: `/client/${business.slug}/` })), ...data.invitations.filter(invitation => invitation.status === "pending").map(invitation => ({ id: invitation._id, business: invitation.businessName, email: invitation.email, status: "Invited" as const, workosInvitationId: invitation.workosInvitationId, invitationState: invitation.workosInvitationId ? "sent" as const : "not_sent" as const }))] : [];
-  return <AdminClientsView clients={clients} open={open} setOpen={setOpen} onSubmit={submit} error={error} submitting={submitting} />;
+  const clients: Client[] = data ? data.businesses.map(business => {const invitation=data.invitations.find(item=>item.businessId===business._id&&item.status==="pending");return invitation?{id:invitation._id,business:business.name,email:invitation.email,status:invitation.workosInvitationId?"Invited" as const:"Setup" as const,workspaceHref:`/client/${business.slug}/`,workosInvitationId:invitation.workosInvitationId,invitationState:invitation.workosInvitationId?"sent" as const:undefined,invitationNote:invitation.workosInvitationId?"Secure invitation pending acceptance.":"Administrator-managed setup; invite when ready."}:{id:business._id,business:business.name,email:"Client owner",status:"Active" as const,workspaceHref:`/client/${business.slug}/`}}) : [];
+  return <AdminClientsView clients={clients} open={open} setOpen={setOpen} onSubmit={submit} error={error} submitting={submitting} busyId={busyId} message={message} onResend={resend} onSetup={()=>setMessage("This account is already available for administrator-managed setup.")} onRemove={remove}/>;
 }
 
 function AdminClientsView({ clients, open, setOpen, onSubmit, error = "", submitting = false, busyId, message, onResend, onSetup, onRemove, pilot = false }: {

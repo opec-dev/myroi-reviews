@@ -1,28 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { AnalyticsEvent, EmailDeliveryLog } from "@/lib/demo-data";
 import { readPilotEmailLog, readPilotEvents } from "@/lib/pilot-tracking";
 
 const eventNames:Record<AnalyticsEvent["type"],string>={funnel_view:"Funnel viewed",qr_scan:"QR code scanned",rating_selected:"Rating selected",private_feedback_submitted:"Private form completed",destination_clicked:"Review link clicked",maybe_later:"Maybe later selected",public_review_fallback:"Public review fallback selected"};
 
-export function ClientAnalytics({businessSlug}:{businessSlug:string}){
-  const [events,setEvents]=useState<AnalyticsEvent[]>([]); const [emails,setEmails]=useState<EmailDeliveryLog[]>([]);
-  useEffect(()=>{const load=()=>{setEvents(readPilotEvents().filter(x=>x.businessSlug===businessSlug));setEmails(readPilotEmailLog().filter(x=>x.businessSlug===businessSlug))};load();window.addEventListener("myroi-analytics-updated",load);window.addEventListener("myroi-email-log-updated",load);return()=>{window.removeEventListener("myroi-analytics-updated",load);window.removeEventListener("myroi-email-log-updated",load)}},[businessSlug]);
+export function ClientAnalytics({businessId}:{businessId:Id<"businesses">}){
+  const data=useQuery(api.analytics.forBusiness,{businessId});
+  const events:AnalyticsEvent[]=(data?.events??[]).map(row=>({id:row._id,businessSlug:"",type:row.eventType,occurredAt:new Date(row.occurredAt).toISOString(),sessionId:row.sessionId,source:row.source,destinationId:row.destinationId,destinationName:row.destinationName,rating:row.rating}));
+  const emails:EmailDeliveryLog[]=(data?.emails??[]).map(row=>({id:row._id,kind:row.kind,status:row.status,recipient:row.recipient,subject:row.subject,occurredAt:new Date(row.occurredAt).toISOString(),error:row.error}));
   const stats=useMemo(()=>summarize(events),[events]);
-  return <><div className="analytics-metrics"><Metric label="Funnel visits" value={stats.views}/><Metric label="QR scans" value={stats.scans}/><Metric label="Forms completed" value={stats.forms}/><Metric label="Review-link clicks" value={stats.clicks}/><Metric label="Click conversion" value={`${stats.conversion}%`}/></div><div className="analytics-columns"><ActivityTable events={events}/><EmailTable emails={emails}/></div><small className="pilot-note">The public pilot stores activity in this browser. The connected deployment writes the same records to Convex for account-wide reporting.</small></>;
+  return <><div className="analytics-metrics"><Metric label="Funnel visits" value={stats.views}/><Metric label="QR scans" value={stats.scans}/><Metric label="Forms completed" value={stats.forms}/><Metric label="Review-link clicks" value={stats.clicks}/><Metric label="Click conversion" value={`${stats.conversion}%`}/></div><div className="analytics-columns"><ActivityTable events={events}/><EmailTable emails={emails}/></div><small className="pilot-note">Activity is stored in Convex and shared across authorized users for this client.</small></>;
 }
 
 export function ResellerAnalytics(){
-  const [emails,setEmails]=useState<EmailDeliveryLog[]>([]);
-  useEffect(()=>{const load=()=>setEmails(readPilotEmailLog());load();window.addEventListener("myroi-email-log-updated",load);return()=>window.removeEventListener("myroi-email-log-updated",load)},[]);
+  const data=useQuery(api.analytics.resellerOverview,{});const emails:EmailDeliveryLog[]=(data?.emails??[]).map(row=>({id:row._id,kind:row.kind,status:row.status,recipient:row.recipient,subject:row.subject,occurredAt:new Date(row.occurredAt).toISOString(),error:row.error}));
   const failed=emails.filter(x=>x.status==="failed"); const unsent=emails.filter(x=>x.status!=="sent");
   return <>{unsent.length>0?<div className="delivery-alert"><strong>Email delivery needs attention</strong><span>{failed.length} failed and {unsent.length-failed.length} not sent. Client activity remains in each client workspace; this page only reports delivery-system health.</span></div>:<div className="delivery-ok"><strong>Email delivery health</strong><span>No unsuccessful email attempts recorded.</span></div>}<div className="system-health-grid"><Metric label="Failed deliveries" value={failed.length}/><Metric label="Not sent" value={unsent.length-failed.length}/><Metric label="Successful deliveries" value={emails.filter(x=>x.status==="sent").length}/></div><EmailTable emails={emails}/></>;
 }
 
 export function ResellerEmailHealth({openLog}:{openLog:()=>void}){
-  const [emails,setEmails]=useState<EmailDeliveryLog[]>([]);
-  useEffect(()=>{const load=()=>setEmails(readPilotEmailLog());load();window.addEventListener("myroi-email-log-updated",load);return()=>window.removeEventListener("myroi-email-log-updated",load)},[]);
+  const data=useQuery(api.analytics.resellerOverview,{});const emails=data?.emails??[];
   const unsent=emails.filter(x=>x.status!=="sent");
   return unsent.length?<button className="delivery-alert dashboard-alert" onClick={openLog}><span><strong>Email delivery needs attention</strong><small>{unsent.length} unsuccessful attempt{unsent.length===1?"":"s"} recorded. Open the delivery log.</small></span><b>Review →</b></button>:<div className="delivery-ok dashboard-alert"><span><strong>Email delivery health</strong><small>No unsuccessful attempts recorded.</small></span><b>Healthy</b></div>;
 }

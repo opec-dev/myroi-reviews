@@ -6,6 +6,8 @@ const settings = {
   showBusinessName: v.boolean(), ratingHeadline: v.string(), ratingSubtext: v.string(), positiveThreshold: v.number(), positiveHeadline: v.string(), positiveSubtext: v.string(), maybeLaterText: v.string(), completionHeadline: v.string(), completionSubtext: v.string(), recoveryHeadline: v.string(), recoverySubtext: v.string(), nameLabel: v.string(), contactLabel: v.string(), messageLabel: v.string(), submitText: v.string(), publicLinkText: v.string(),
 };
 
+export const forBusiness=query({args:{businessId:v.id("businesses")},handler:async(ctx,{businessId})=>{await requireBusinessAccess(ctx,businessId);return await ctx.db.query("funnelSettings").withIndex("by_business",q=>q.eq("businessId",businessId)).unique();}});
+
 export const publicBySlug = query({ args: { slug: v.string() }, handler: async (ctx, { slug }) => {
   const business = await ctx.db.query("businesses").withIndex("by_slug", q => q.eq("slug", slug)).unique();
   if (!business || !business.isPublished) return null;
@@ -13,7 +15,8 @@ export const publicBySlug = query({ args: { slug: v.string() }, handler: async (
     ctx.db.query("funnelSettings").withIndex("by_business", q => q.eq("businessId", business._id)).unique(),
     ctx.db.query("reviewDestinations").withIndex("by_business", q => q.eq("businessId", business._id)).collect(),
   ]);
-  return { business, funnel, destinations: destinations.filter(x => x.isEnabled) };
+  const [logoUrl,iconUrl]=await Promise.all([business.logoStorageId?ctx.storage.getUrl(business.logoStorageId):null,business.iconStorageId?ctx.storage.getUrl(business.iconStorageId):null]);
+  return { business:{...business,logoUrl,iconUrl}, funnel, destinations: destinations.filter(x => x.isEnabled) };
 }});
 
 export const saveSettings = mutation({ args: { businessId: v.id("businesses"), ...settings }, handler: async (ctx, args) => {
