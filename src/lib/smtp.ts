@@ -6,6 +6,8 @@ import { decryptSmtpSecret } from "@/lib/smtp-secrets";
 
 export type SmtpConfiguration={host:string;port:number;user:string;password:string;fromName:string;fromEmail:string;testRecipient:string};
 export type AlertSmtpConfiguration={host:string;port:number;user:string;password:string;fromEmail:string;recipient:string;enabled:boolean};
+export type EmailMessage={fromName:string;fromEmail:string;to:string;subject:string;text:string;replyTo?:string};
+export type EmailDeliveryResult={messageId:string;transport:"mailjet_api"|"smtp"};
 
 export async function loadEmailConfiguration(){
   const saved=await readMasterEmailSettings();
@@ -20,4 +22,26 @@ export async function loadEmailConfiguration(){
 
 export function createSmtpTransport(config:SmtpConfiguration|AlertSmtpConfiguration){
   return nodemailer.createTransport({host:config.host,port:config.port,secure:config.port===465,auth:{user:config.user,pass:config.password},connectionTimeout:15_000,greetingTimeout:15_000,socketTimeout:30_000});
+}
+
+export async function sendEmail(config:SmtpConfiguration|AlertSmtpConfiguration,message:EmailMessage):Promise<EmailDeliveryResult>{
+  if(isMailjet(config.host))return await sendWithMailjet(config,message);
+  const transport=createSmtpTransport(config);
+  try{
+    const result=await transport.sendMail({from:{name:message.fromName,address:message.fromEmail},to:message.to,replyTo:message.replyTo,subject:message.subject,text:message.text});
+    return{messageId:result.messageId,transport:"smtp"};
+  }finally{transport.close()}
+}
+
+function isMailjet(host:string){return host.trim().toLowerCase()==="in-v3.mailjet.com"||host.trim().toLowerCase().endsWith(".mailjet.com")}
+
+async function sendWithMailjet(config:SmtpConfiguration|AlertSmtpConfiguration,message:EmailMessage):Promise<EmailDeliveryResult>{
+  const response=await fetch("https://api.mailjet.com/v3.1/send",{method:"POST",headers:{authorization:`Basic ${Buffer.from(`${config.user}:${config.password}`).toString("base64")}`,"content-type":"application/json"},body:JSON.stringify({Messages:[{From:{Email:message.fromEmail,Name:message.fromName},To:[{Email:message.to}],...(message.replyTo?{ReplyTo:{Email:message.replyTo}}:{}),Subject:message.subject,TextPart:message.text}]}) ,signal:AbortSignal.timeout(15_000)});
+  const payload=await response.json().catch(()=>null) as null|{Messages?:Array<{Status?:string;To?:Array<{MessageID?:number|string;Errors?:Array<{ErrorMessage?:string}>}>;Errors?:Array<{ErrorMessage?:string}>}>;ErrorMessage?:string};
+  const result=payload?.Messages?.[0];
+  if(!response.ok||result?.Status!=="success"){
+    const detail=result?.Errors?.[0]?.ErrorMessage??result?.To?.[0]?.Errors?.[0]?.ErrorMessage??payload?.ErrorMessage??response.statusText;
+    throw new Error(`Mailjet rejected the message (${response.status})${detail?`: ${detail}`:"."}`);
+  }
+  return{messageId:String(result.To?.[0]?.MessageID??"mailjet-accepted"),transport:"mailjet_api"};
 }

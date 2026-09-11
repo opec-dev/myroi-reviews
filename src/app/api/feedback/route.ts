@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { persistEmailLog, readClientNotificationSettings } from "@/lib/server-events";
-import { createSmtpTransport, loadEmailConfiguration, type AlertSmtpConfiguration } from "@/lib/smtp";
+import { loadEmailConfiguration, sendEmail, type AlertSmtpConfiguration } from "@/lib/smtp";
 
 const feedbackSchema=z.object({business:z.string().max(160),slug:z.string().max(160),rating:z.number().int().min(1).max(5),name:z.string().nullable().optional(),contact:z.string().min(1).max(200),message:z.string().min(1).max(5000)});
 type DeliveryStatus="sent"|"not_sent"|"failed";
@@ -11,7 +11,7 @@ async function logDelivery(input:{businessSlug?:string;kind:"private_feedback"|"
 async function alertAdmin(problem:string,businessSlug:string,alert:AlertSmtpConfiguration|null){
   const recipient=alert?.recipient??""; const subject="myROI Reviews email delivery problem";
   if(!alert?.enabled){await logDelivery({businessSlug,kind:"admin_failure_alert",status:"not_sent",recipient,subject,error:"Independent alert SMTP is not configured"});return}
-  try{const transport=createSmtpTransport(alert);await transport.sendMail({from:{name:"myROI Reviews Monitor",address:alert.fromEmail},to:recipient,subject,text:`An email from myROI Reviews was not delivered.\n\nBusiness: ${businessSlug}\nProblem: ${problem}\nTime: ${new Date().toISOString()}\n\nOpen the reseller email log for details.`});await logDelivery({businessSlug,kind:"admin_failure_alert",status:"sent",recipient,subject})}
+  try{await sendEmail(alert,{fromName:"myROI Reviews Monitor",fromEmail:alert.fromEmail,to:recipient,subject,text:`An email from myROI Reviews was not delivered.\n\nBusiness: ${businessSlug}\nProblem: ${problem}\nTime: ${new Date().toISOString()}\n\nOpen the reseller email log for details.`});await logDelivery({businessSlug,kind:"admin_failure_alert",status:"sent",recipient,subject})}
   catch(error){await logDelivery({businessSlug,kind:"admin_failure_alert",status:"failed",recipient,subject,error:error instanceof Error?error.message:"Backup alert delivery failed"})}
 }
 
@@ -22,7 +22,7 @@ export async function POST(request:Request){
   if(clientSettings?.notifyPrivateFeedback===false||(!clientSettings&&process.env.SMTP_NOTIFY_PRIVATE_FEEDBACK==="false")){await logDelivery({businessSlug:feedback.slug,kind:"private_feedback",status:"not_sent",recipient,subject,error:"Private-feedback notifications are disabled for this client"});return NextResponse.json({accepted:true,notified:false,recipient,reason:"Notifications are disabled for this client"})}
   const{primary,alert}=await loadEmailConfiguration().catch(()=>({primary:null,alert:null}));
   if(!primary||!recipient){const reason="Primary SMTP is not configured";await logDelivery({businessSlug:feedback.slug,kind:"private_feedback",status:"not_sent",recipient,subject,error:reason});await alertAdmin(reason,feedback.slug,alert);return NextResponse.json({accepted:true,notified:false,recipient,reason},{status:202})}
-  try{const transport=createSmtpTransport(primary);await transport.sendMail({from:{name:primary.fromName,address:primary.fromEmail},to:recipient,replyTo:feedback.contact.includes("@")?feedback.contact:undefined,subject,text:`Business: ${feedback.business}\nRating: ${feedback.rating}/5\nName: ${feedback.name??"Not supplied"}\nContact: ${feedback.contact}\n\n${feedback.message}`});await logDelivery({businessSlug:feedback.slug,kind:"private_feedback",status:"sent",recipient,subject});return NextResponse.json({accepted:true,notified:true,recipient})}
+  try{await sendEmail(primary,{fromName:primary.fromName,fromEmail:primary.fromEmail,to:recipient,replyTo:feedback.contact.includes("@")?feedback.contact:undefined,subject,text:`Business: ${feedback.business}\nRating: ${feedback.rating}/5\nName: ${feedback.name??"Not supplied"}\nContact: ${feedback.contact}\n\n${feedback.message}`});await logDelivery({businessSlug:feedback.slug,kind:"private_feedback",status:"sent",recipient,subject});return NextResponse.json({accepted:true,notified:true,recipient})}
   catch(error){const reason=sanitizeError(error);await logDelivery({businessSlug:feedback.slug,kind:"private_feedback",status:"failed",recipient,subject,error:reason});await alertAdmin(reason,feedback.slug,alert);return NextResponse.json({accepted:true,notified:false,recipient,error:reason},{status:502})}
 }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSmtpTransport, loadEmailConfiguration } from "@/lib/smtp";
+import { loadEmailConfiguration, sendEmail } from "@/lib/smtp";
 import { persistEmailLog } from "@/lib/server-events";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 
@@ -11,26 +11,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cross-site SMTP tests are not allowed." }, { status: 403 });
   }
 
-  const {primary}=await loadEmailConfiguration().catch(()=>({primary:null}));
-  const recipient = primary?.testRecipient??"";
-  const subject = "myROI Reviews SMTP test";
-  if (!primary || !recipient) {
-    const missing = [...(!primary?["saved SMTP credentials"]:[]),...(!recipient?["test recipient"]:[])];
+  const body=await request.json().catch(()=>({})) as {target?:unknown};
+  const target=body.target==="backup"?"backup":"primary";
+  const {primary,alert}=await loadEmailConfiguration().catch(()=>({primary:null,alert:null}));
+  const config=target==="backup"?alert:primary;
+  const recipient=target==="backup"?(alert?.recipient??""):(primary?.testRecipient??"");
+  const subject=target==="backup"?"myROI Reviews backup delivery test":"myROI Reviews primary delivery test";
+  if (!config || !recipient) {
+    const missing = [...(!config?[`${target} email credentials`]:[]),...(!recipient?[target==="backup"?"reseller alert recipient":"test recipient"]:[])];
     await logTest({ status: "not_sent", recipient, subject, error: `Missing: ${missing.join(", ")}` });
-    return NextResponse.json({ error: "SMTP test is not fully configured.", missing }, { status: 503 });
+    return NextResponse.json({ error: `${target==="backup"?"Backup":"Primary"} email test is not fully configured.`, missing }, { status: 503 });
   }
 
   try {
-    const transport = createSmtpTransport(primary);
-    await transport.verify();
-    const result = await transport.sendMail({
-      from: { name: primary.fromName, address: primary.fromEmail },
-      to: recipient,
-      subject,
-      text: `The myROI Reviews Worker connected to the master email service and sent this test successfully.\n\nTime: ${new Date().toISOString()}`,
-    });
+    const result=await sendEmail(config,{fromName:target==="backup"?"myROI Reviews Monitor":primary!.fromName,fromEmail:target==="backup"?alert!.fromEmail:primary!.fromEmail,to:recipient,subject,text:`The myROI Reviews Worker sent this ${target} delivery test successfully.\n\nTime: ${new Date().toISOString()}`});
     await logTest({ status: "sent", recipient, subject });
-    return NextResponse.json({ sent: true, recipient: maskEmail(recipient), messageId: result.messageId });
+    return NextResponse.json({ sent: true, target, recipient: maskEmail(recipient), messageId: result.messageId, transport:result.transport });
   } catch (error) {
     const problem = sanitizeSmtpError(error);
     await logTest({ status: "failed", recipient, subject, error: problem });
