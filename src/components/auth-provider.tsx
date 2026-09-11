@@ -2,7 +2,8 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AuthKitProvider, useAccessToken, useAuth } from "@workos-inc/authkit-nextjs/components";
-import { ConvexProvider, ConvexProviderWithAuth, ConvexReactClient, useConvexAuth } from "convex/react";
+import { ConvexProvider, ConvexProviderWithAuth, ConvexReactClient, useConvexAuth, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 export function AppAuthProvider({ children, enabled }: { children: ReactNode; enabled: boolean }) {
   return enabled ? <ConnectedProviders>{children}</ConnectedProviders> : <PublicConvexProvider>{children}</PublicConvexProvider>;
@@ -19,8 +20,27 @@ function ConnectedProviders({ children }: { children: ReactNode }) {
 }
 
 function AccountBootstrap({children}:{children:ReactNode}){
-  const {isAuthenticated}=useConvexAuth();const started=useRef(false);
-  useEffect(()=>{if(!isAuthenticated||started.current)return;started.current=true;void fetch("/api/auth/bootstrap",{method:"POST"}).then(response=>{if(!response.ok)throw new Error("Account provisioning failed")}).catch(()=>{started.current=false})},[isAuthenticated]);
+  const {isAuthenticated,isLoading}=useConvexAuth();
+  const syncCurrentUser=useMutation(api.accounts.syncCurrentUser);
+  const started=useRef(false);
+  const [ready,setReady]=useState(false);
+  const [failed,setFailed]=useState(false);
+
+  useEffect(()=>{
+    if(isLoading)return;
+    if(!isAuthenticated){started.current=false;setReady(true);return;}
+    if(started.current)return;
+    started.current=true;
+    setReady(false);
+    setFailed(false);
+    void syncCurrentUser({})
+      .then(()=>setReady(true))
+      .catch(()=>{started.current=false;setFailed(true)});
+  },[isAuthenticated,isLoading,syncCurrentUser]);
+
+  if(isLoading||!ready){
+    return <main className="login-page"><section className="login-card"><h1>{failed?"Account setup failed":"Loading secure dashboard…"}</h1>{failed&&<p>Please sign out and try again. If this continues, contact the platform administrator.</p>}</section></main>;
+  }
   return children;
 }
 
