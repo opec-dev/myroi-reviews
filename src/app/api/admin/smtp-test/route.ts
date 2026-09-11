@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createSmtpTransport, getSmtpStatus } from "@/lib/smtp";
+import { createSmtpTransport, loadEmailConfiguration } from "@/lib/smtp";
 import { persistEmailLog } from "@/lib/server-events";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 
@@ -11,20 +11,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cross-site SMTP tests are not allowed." }, { status: 403 });
   }
 
-  const status = getSmtpStatus();
-  const recipient = status.testRecipient;
+  const {primary}=await loadEmailConfiguration().catch(()=>({primary:null}));
+  const recipient = primary?.testRecipient??"";
   const subject = "myROI Reviews SMTP test";
-  if (!status.configured || !recipient) {
-    const missing = [...status.missing, ...(!recipient ? ["SMTP_TEST_TO or SMTP_FAILURE_ALERT_TO"] : [])];
-    await logTest({ status: "not_sent", recipient, subject, error: `Missing Worker variables: ${missing.join(", ")}` });
+  if (!primary || !recipient) {
+    const missing = [...(!primary?["saved SMTP credentials"]:[]),...(!recipient?["test recipient"]:[])];
+    await logTest({ status: "not_sent", recipient, subject, error: `Missing: ${missing.join(", ")}` });
     return NextResponse.json({ error: "SMTP test is not fully configured.", missing }, { status: 503 });
   }
 
   try {
-    const transport = createSmtpTransport();
+    const transport = createSmtpTransport(primary);
     await transport.verify();
     const result = await transport.sendMail({
-      from: { name: process.env.SMTP_FROM_NAME ?? "myROIagency Reviews", address: process.env.SMTP_FROM_EMAIL! },
+      from: { name: primary.fromName, address: primary.fromEmail },
       to: recipient,
       subject,
       text: `The myROI Reviews Worker connected to the master email service and sent this test successfully.\n\nTime: ${new Date().toISOString()}`,

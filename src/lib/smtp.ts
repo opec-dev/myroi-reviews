@@ -1,50 +1,23 @@
 import "server-only";
 
 import nodemailer from "nodemailer";
+import { readMasterEmailSettings } from "@/lib/server-events";
+import { decryptSmtpSecret } from "@/lib/smtp-secrets";
 
-export const smtpRequiredKeys = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM_EMAIL"] as const;
+export type SmtpConfiguration={host:string;port:number;user:string;password:string;fromName:string;fromEmail:string;testRecipient:string};
+export type AlertSmtpConfiguration={host:string;port:number;user:string;password:string;fromEmail:string;recipient:string;enabled:boolean};
 
-export function getSmtpStatus() {
-  const missing = smtpRequiredKeys.filter(key => !process.env[key]?.trim());
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const testRecipient = process.env.SMTP_TEST_TO?.trim() || process.env.SMTP_FAILURE_ALERT_TO?.trim() || "";
-  return {
-    configured: missing.length === 0,
-    missing,
-    hostConfigured: Boolean(process.env.SMTP_HOST?.trim()),
-    port: Number.isFinite(port) ? port : 587,
-    userConfigured: Boolean(process.env.SMTP_USER?.trim()),
-    passwordConfigured: Boolean(process.env.SMTP_PASSWORD?.trim()),
-    fromEmailConfigured: Boolean(process.env.SMTP_FROM_EMAIL?.trim()),
-    testRecipientConfigured: Boolean(testRecipient),
-    testRecipient,
-  };
+export async function loadEmailConfiguration(){
+  const saved=await readMasterEmailSettings();
+  if(saved?.smtpHost&&saved.smtpUser&&saved.smtpPasswordCiphertext&&saved.fromEmail){
+    const primary:SmtpConfiguration={host:saved.smtpHost,port:saved.smtpPort||587,user:saved.smtpUser,password:await decryptSmtpSecret(saved.smtpPasswordCiphertext),fromName:saved.fromName||"myROIagency Reviews",fromEmail:saved.fromEmail,testRecipient:saved.smtpTestRecipient??""};
+    const alert:AlertSmtpConfiguration|null=saved.alertSmtpHost&&saved.alertSmtpUser&&saved.alertSmtpPasswordCiphertext&&saved.alertFromEmail&&saved.failureAlertEmail?{host:saved.alertSmtpHost,port:saved.alertSmtpPort||587,user:saved.alertSmtpUser,password:await decryptSmtpSecret(saved.alertSmtpPasswordCiphertext),fromEmail:saved.alertFromEmail,recipient:saved.failureAlertEmail,enabled:saved.notifyEmailFailures!==false}:null;
+    return{primary,alert};
+  }
+  const primary:SmtpConfiguration|null=process.env.SMTP_HOST&&process.env.SMTP_USER&&process.env.SMTP_PASSWORD&&process.env.SMTP_FROM_EMAIL?{host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT??587),user:process.env.SMTP_USER,password:process.env.SMTP_PASSWORD,fromName:process.env.SMTP_FROM_NAME??"myROIagency Reviews",fromEmail:process.env.SMTP_FROM_EMAIL,testRecipient:process.env.SMTP_TEST_TO?.trim()||process.env.SMTP_FAILURE_ALERT_TO?.trim()||""}:null;
+  return{primary,alert:null};
 }
 
-export function createSmtpTransport() {
-  const status = getSmtpStatus();
-  if (!status.configured) throw new Error(`Missing Worker variables: ${status.missing.join(", ")}`);
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST!,
-    port: status.port,
-    secure: status.port === 465,
-    auth: { user: process.env.SMTP_USER!, pass: process.env.SMTP_PASSWORD! },
-    connectionTimeout: 15_000,
-    greetingTimeout: 15_000,
-    socketTimeout: 30_000,
-  });
-}
-
-export function publicSmtpStatus() {
-  const status = getSmtpStatus();
-  return {
-    configured: status.configured,
-    missing: status.missing,
-    smtpHostConfigured: status.hostConfigured,
-    smtpUserConfigured: status.userConfigured,
-    smtpPasswordConfigured: status.passwordConfigured,
-    smtpFromEmailConfigured: status.fromEmailConfigured,
-    smtpTestRecipientConfigured: status.testRecipientConfigured,
-    alertSmtpPasswordConfigured: Boolean(process.env.ALERT_SMTP_PASSWORD?.trim()),
-  };
+export function createSmtpTransport(config:SmtpConfiguration|AlertSmtpConfiguration){
+  return nodemailer.createTransport({host:config.host,port:config.port,secure:config.port===465,auth:{user:config.user,pass:config.password},connectionTimeout:15_000,greetingTimeout:15_000,socketTimeout:30_000});
 }
