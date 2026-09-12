@@ -6,12 +6,6 @@
     "nodejs_compat"
   ],
   "main": "vinext/server/fetch-handler",
-  "routes": [
-    {
-      "pattern": "myroi-reviews.myroiagency.com",
-      "custom_domain": true
-    }
-  ],
   "keep_vars": true,
   "assets": {
     "directory": "dist/client",
