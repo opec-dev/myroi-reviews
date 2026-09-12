@@ -42,6 +42,9 @@ export default defineSchema({
     address: v.optional(v.string()),
     logoStorageId: v.optional(v.id("_storage")),
     iconStorageId: v.optional(v.id("_storage")),
+    googleBadgeStorageId: v.optional(v.id("_storage")),
+    yelpBadgeStorageId: v.optional(v.id("_storage")),
+    publicReviewPageUrl: v.optional(v.string()),
     primaryColor: v.string(),
     secondaryColor: v.optional(v.string()),
     isPublished: v.boolean(),
@@ -140,6 +143,7 @@ export default defineSchema({
     alertSmtpUser: v.optional(v.string()),
     alertSmtpPasswordCiphertext: v.optional(v.string()),
     alertFromEmail: v.optional(v.string()),
+    alertsAcknowledgedAt: v.optional(v.number()),
   }).index("by_owner", ["ownerUserId"]),
 
   resellerSettings: defineTable({
@@ -184,6 +188,7 @@ export default defineSchema({
   })
     .index("by_business", ["businessId"])
     .index("by_business_published", ["businessId", "isPublished"])
+    .index("by_business_provider_external_id", ["businessId", "sourceProvider", "externalId"])
     .index("by_provider_external_id", ["sourceProvider", "externalId"]),
 
   embedSettings: defineTable({
@@ -226,6 +231,7 @@ export default defineSchema({
     recipient: v.string(),
     subject: v.string(),
     error: v.optional(v.string()),
+    providerRole: v.optional(v.union(v.literal("primary"), v.literal("backup"))),
     occurredAt: v.number(),
   })
     .index("by_business_time",["businessId","occurredAt"])

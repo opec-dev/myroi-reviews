@@ -38,9 +38,9 @@ export const clientNotificationSettingsStorageKey = "myroi:notifications:yorkshi
 
 export type AnalyticsEventType = "funnel_view" | "qr_scan" | "rating_selected" | "private_feedback_submitted" | "destination_clicked" | "maybe_later" | "public_review_fallback";
 export type AnalyticsEvent = { id:string; businessSlug:string; type:AnalyticsEventType; occurredAt:string; sessionId:string; source?:string; destinationId?:string; destinationName?:string; rating?:number };
-export type EmailDeliveryLog = { id:string; businessSlug?:string; kind:"private_feedback"|"new_review"|"admin_failure_alert"|"invitation"|"smtp_test"; status:"sent"|"not_sent"|"failed"; recipient:string; subject:string; occurredAt:string; error?:string };
+export type EmailDeliveryLog = { id:string; businessSlug?:string; kind:"private_feedback"|"new_review"|"admin_failure_alert"|"invitation"|"smtp_test"; status:"sent"|"not_sent"|"failed"; recipient:string; subject:string; occurredAt:string; error?:string;providerRole?:"primary"|"backup" };
 
-export type BusinessBranding = { logoUrl:string; iconUrl:string; primaryColor:string; secondaryColor:string };
+export type BusinessBranding = { logoUrl:string; iconUrl:string; googleBadgeUrl?:string; yelpBadgeUrl?:string; primaryColor:string; secondaryColor:string };
 export type ClientNotificationSettings = { notificationEmail:string; notifyPrivateFeedback:boolean; notifyNewReviews:boolean };
 
 export const defaultClientNotificationSettings:ClientNotificationSettings = {
@@ -147,7 +147,7 @@ export const demoBusiness = {
   reviewUrl: "/r/yorkshire-roofing",
 };
 
-export const defaultBusinessBranding:BusinessBranding = { logoUrl:demoBusiness.logoUrl, iconUrl:demoBusiness.iconUrl, primaryColor:demoBusiness.accent, secondaryColor:demoBusiness.accentSecondary };
+export const defaultBusinessBranding:BusinessBranding = { logoUrl:demoBusiness.logoUrl, iconUrl:demoBusiness.iconUrl, googleBadgeUrl:"/brands/review-us-google.svg", yelpBadgeUrl:"/brands/review-us-yelp.svg", primaryColor:demoBusiness.accent, secondaryColor:demoBusiness.accentSecondary };
 
 export const demoDestinations: ReviewDestination[] = [
   {

@@ -18,6 +18,7 @@ import type * as funnel from "../funnel.js";
 import type * as helpers from "../helpers.js";
 import type * as printCards from "../printCards.js";
 import type * as reseller from "../reseller.js";
+import type * as reviews from "../reviews.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   helpers: typeof helpers;
   printCards: typeof printCards;
   reseller: typeof reseller;
+  reviews: typeof reviews;
 }>;
 
 /**

@@ -19,22 +19,22 @@ export async function POST(request: Request) {
   const subject=target==="backup"?"myROI Reviews backup delivery test":"myROI Reviews primary delivery test";
   if (!config || !recipient) {
     const missing = [...(!config?[`${target} email credentials`]:[]),...(!recipient?[target==="backup"?"reseller alert recipient":"test recipient"]:[])];
-    await logTest({ status: "not_sent", recipient, subject, error: `Missing: ${missing.join(", ")}` });
+    await logTest({ status: "not_sent", recipient, subject, error: `Missing: ${missing.join(", ")}`,providerRole:target });
     return NextResponse.json({ error: `${target==="backup"?"Backup":"Primary"} email test is not fully configured.`, missing }, { status: 503 });
   }
 
   try {
     const result=await sendEmail(config,{fromName:target==="backup"?"myROI Reviews Monitor":primary!.fromName,fromEmail:target==="backup"?alert!.fromEmail:primary!.fromEmail,to:recipient,subject,text:`The myROI Reviews Worker sent this ${target} delivery test successfully.\n\nTime: ${new Date().toISOString()}`});
-    await logTest({ status: "sent", recipient, subject });
+    await logTest({ status: "sent", recipient, subject,providerRole:target });
     return NextResponse.json({ sent: true, target, recipient: maskEmail(recipient), messageId: result.messageId, transport:result.transport });
   } catch (error) {
     const problem = sanitizeSmtpError(error);
-    await logTest({ status: "failed", recipient, subject, error: problem });
+    await logTest({ status: "failed", recipient, subject, error: problem,providerRole:target });
     return NextResponse.json({ sent: false, recipient: maskEmail(recipient), error: problem }, { status: 502 });
   }
 }
 
-async function logTest(input: { status: "sent" | "not_sent" | "failed"; recipient: string; subject: string; error?: string }) {
+async function logTest(input: { status: "sent" | "not_sent" | "failed"; recipient: string; subject: string; error?: string;providerRole:"primary"|"backup" }) {
   try { await persistEmailLog({ ...input, kind: "smtp_test", occurredAt: Date.now() }); } catch { /* Diagnostics must still be returned when logging is unavailable. */ }
 }
 
@@ -46,5 +46,6 @@ function maskEmail(value: string) {
 
 function sanitizeSmtpError(error: unknown) {
   if (!(error instanceof Error)) return "SMTP connection or delivery failed.";
-  return error.message.replace(/(pass(?:word)?|token|secret)=?\s*[^\s,;]+/gi, "$1=[redacted]").slice(0, 500);
+  const message=error.message.replace(/(pass(?:word)?|token|secret)=?\s*[^\s,;]+/gi, "$1=[redacted]").slice(0, 420);
+  return /timed?\s*out|timeout/i.test(message)?`Connection timed out before the provider accepted the message. Verify the exact host and port in the provider dashboard; some providers require separate API credentials for Cloudflare-hosted apps. (${message})`:message;
 }

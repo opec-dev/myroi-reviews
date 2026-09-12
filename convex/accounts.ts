@@ -12,6 +12,8 @@ function isPlatformAdmin(email: string) {
 
 function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "business"; }
 
+async function seedYorkshireReviews(ctx:MutationCtx,businessId:Id<"businesses">){const seeds=[{externalId:"pilot-google-dane-gibson",reviewerName:"Dane Gibson",rating:5,excerpt:"The job is always completed with meticulous attention to detail and cleaned up professionally.",sourceLabel:"Google",sourceUrl:"https://maps.app.goo.gl/nxMPvZYEQbnqxyqF6",sourceProvider:"google" as const},{externalId:"pilot-yelp-tim-k",reviewerName:"Tim K.",rating:5,excerpt:"Five-star customer service and repair. I was impressed by the team's professionalism and work ethic.",sourceLabel:"Yelp",sourceUrl:"https://www.yelp.com/biz/yorkshire-roofing-livermore-2",sourceProvider:"yelp" as const},{externalId:"pilot-diamond-bonnie-f",reviewerName:"Bonnie F.",rating:5,excerpt:"They were prompt, came when they said they would, and did a good job.",sourceLabel:"Diamond Certified",sourceUrl:"https://www.diamondcertified.org/report/yorkshire-roofing-of-northern-california-inc-dba-roofmax/",sourceProvider:"diamond" as const}];for(const seed of seeds){const existing=await ctx.db.query("reviews").withIndex("by_business_provider_external_id",q=>q.eq("businessId",businessId).eq("sourceProvider",seed.sourceProvider).eq("externalId",seed.externalId)).first();if(!existing)await ctx.db.insert("reviews",{businessId,...seed,importMethod:"manual",isPublished:true})}}
+
 async function createBusiness(ctx: MutationCtx, ownerUserId: Id<"users">, name: string, preferredSlug?: string) {
   const organizationId = await ctx.db.insert("organizations", { name, ownerUserId });
   const baseSlug = preferredSlug ?? slugify(name);
@@ -98,7 +100,7 @@ export const recordInvitation = mutation({ args: { email:v.string(), businessNam
 export const bootstrapYorkshire = mutation({ args: {}, handler: async ctx => {
   const user = await requireUser(ctx); if (!user.isPlatformAdmin) throw new Error("Administrator access required");
   const existing = await ctx.db.query("businesses").withIndex("by_slug", q => q.eq("slug", "yorkshire-roofing")).unique();
-  if (existing) return existing._id;
+  if (existing){await seedYorkshireReviews(ctx,existing._id);return existing._id}
   const created = await createBusiness(ctx, user._id, "Yorkshire Roofing", "yorkshire-roofing");
   await ctx.db.patch(created.businessId, { websiteUrl: "https://yorkshireroofing.com", phone: "(800) 794-7444", address: "7610 National Dr, Livermore, CA 94550", primaryColor: "#155aa8", secondaryColor: "#e63946" });
   await Promise.all([
@@ -106,6 +108,7 @@ export const bootstrapYorkshire = mutation({ args: {}, handler: async ctx => {
     ctx.db.insert("reviewDestinations", { businessId: created.businessId, provider: "yelp", label: "Yelp", reviewUrl: "https://www.yelp.com/writeareview/biz/XiuDvYUoONhqJLmLPNrkeg", profileUrl: "https://www.yelp.com/biz/yorkshire-roofing-livermore-2", displayOrder: 1, isEnabled: true }),
     ctx.db.insert("clientNotificationSettings", { businessId: created.businessId, notificationEmail: "opecora@sicconsulting.com", notifyPrivateFeedback: true, notifyNewReviews: false }),
   ]);
+  await seedYorkshireReviews(ctx,created.businessId);
   return created.businessId;
 } });
 

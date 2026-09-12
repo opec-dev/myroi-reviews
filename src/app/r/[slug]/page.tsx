@@ -5,7 +5,7 @@ export function generateStaticParams() {
   return [{ slug: demoBusiness.slug }];
 }
 
-export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
-  const {slug}=await params;
-  return <ReviewFunnel slug={slug} />;
+export default async function ReviewPage({ params,searchParams }: { params: Promise<{ slug: string }>;searchParams:Promise<{preview?:string}> }) {
+  const [{slug},query]=await Promise.all([params,searchParams]);
+  return <ReviewFunnel slug={slug} preview={query.preview==="1"} />;
 }

@@ -18,14 +18,22 @@ export const publicBySlug = query({ args: { slug: v.string() }, handler: async (
   const business = await ctx.db.query("businesses").withIndex("by_slug", q => q.eq("slug", slug)).unique();
   if (!business || !business.isPublished) return null;
   const settings = await ctx.db.query("printCardSettings").withIndex("by_business", q => q.eq("businessId", business._id)).unique();
+  const [logoUrl, iconUrl, googleBadgeUrl, yelpBadgeUrl] = await Promise.all([
+    business.logoStorageId ? ctx.storage.getUrl(business.logoStorageId) : null,
+    business.iconStorageId ? ctx.storage.getUrl(business.iconStorageId) : null,
+    business.googleBadgeStorageId ? ctx.storage.getUrl(business.googleBadgeStorageId) : null,
+    business.yelpBadgeStorageId ? ctx.storage.getUrl(business.yelpBadgeStorageId) : null,
+  ]);
   return {
     business: {
       name: business.name,
       slug: business.slug,
       primaryColor: business.primaryColor,
       secondaryColor: business.secondaryColor,
-      logoUrl: business.logoStorageId ? await ctx.storage.getUrl(business.logoStorageId) : null,
-      iconUrl: business.iconStorageId ? await ctx.storage.getUrl(business.iconStorageId) : null,
+      logoUrl,
+      iconUrl,
+      googleBadgeUrl,
+      yelpBadgeUrl,
     },
     settings,
   };

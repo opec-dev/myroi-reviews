@@ -14,7 +14,7 @@ import { recordPilotEmail, trackPilotEvent } from "@/lib/pilot-tracking";
 
 type Stage = "rating" | "positive" | "recovery" | "complete";
 
-export function ReviewFunnel({slug}:{slug:string}) {
+export function ReviewFunnel({slug,preview=false}:{slug:string;preview?:boolean}) {
   const connected=useQuery(api.funnel.publicBySlug,{slug});const saveFeedback=useMutation(api.funnel.submitPrivateFeedback);
   const [stage, setStage] = useState<Stage>("rating");
   const [rating, setRating] = useState(0);
@@ -53,7 +53,7 @@ export function ReviewFunnel({slug}:{slug:string}) {
     setStage("complete");
   }
 
-  return <main className="public-page" style={{ "--primary": branding.primaryColor } as CSSProperties}>
+  return <main className="public-page" style={{ "--primary": branding.primaryColor } as CSSProperties}>{preview&&<a className="preview-back public-preview-back" href={`/client/${slug}#overview`}>← Back to client dashboard</a>}
     <section className="review-funnel">
       <div className="logo-lockup"><img src={branding.logoUrl} alt={`${connected?.business.name??slug} logo`} /></div>
       {settings.showBusinessName && <strong className="funnel-business-name">{connected?.business.name??slug}</strong>}

@@ -26,12 +26,10 @@ export function createSmtpTransport(config:SmtpConfiguration|AlertSmtpConfigurat
 
 export async function sendEmail(config:SmtpConfiguration|AlertSmtpConfiguration,message:EmailMessage):Promise<EmailDeliveryResult>{
   if(isMailjet(config.host))return await sendWithMailjet(config,message);
-  const transport=createSmtpTransport(config);
-  try{
-    const result=await transport.sendMail({from:{name:message.fromName,address:message.fromEmail},to:message.to,replyTo:message.replyTo,subject:message.subject,text:message.text});
-    return{messageId:result.messageId,transport:"smtp"};
-  }finally{transport.close()}
+  try{return await sendWithSmtp(config,message)}catch(error){if(config.host.trim().toLowerCase()==="smtp-pulse.com"&&config.port!==465&&/timeout|timed out|etimedout/i.test(error instanceof Error?error.message:""))return await sendWithSmtp({...config,port:465},message);throw error}
 }
+
+async function sendWithSmtp(config:SmtpConfiguration|AlertSmtpConfiguration,message:EmailMessage){const transport=createSmtpTransport(config);try{const result=await transport.sendMail({from:{name:message.fromName,address:message.fromEmail},to:message.to,replyTo:message.replyTo,subject:message.subject,text:message.text});return{messageId:result.messageId,transport:"smtp" as const}}finally{transport.close()}}
 
 function isMailjet(host:string){return host.trim().toLowerCase()==="in-v3.mailjet.com"||host.trim().toLowerCase().endsWith(".mailjet.com")}
 
