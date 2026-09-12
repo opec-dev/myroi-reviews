@@ -126,6 +126,7 @@ export default defineSchema({
 
   resellerEmailSettings: defineTable({
     ownerUserId: v.id("users"),
+    primaryDeliveryMethod: v.optional(v.union(v.literal("smtp"), v.literal("mailjet_api"), v.literal("sendpulse_api"))),
     smtpHost: v.string(),
     smtpPort: v.number(),
     smtpUser: v.string(),
@@ -138,6 +139,7 @@ export default defineSchema({
     notifyNewReviews: v.optional(v.boolean()),
     notifyEmailFailures: v.optional(v.boolean()),
     failureAlertEmail: v.optional(v.string()),
+    backupDeliveryMethod: v.optional(v.union(v.literal("smtp"), v.literal("mailjet_api"), v.literal("sendpulse_api"))),
     alertSmtpHost: v.optional(v.string()),
     alertSmtpPort: v.optional(v.number()),
     alertSmtpUser: v.optional(v.string()),

@@ -74,3 +74,20 @@
 .print-download-toolbar{display:flex;align-items:center;justify-content:space-between;gap:24px;width:7in;margin:0 0 24px;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 12px 32px #18284516}.print-download-toolbar>div:first-child{display:grid;gap:4px}.print-download-toolbar span{color:var(--muted);font-size:13px}.print-download-toolbar>div:last-child{display:flex;gap:10px}.print-download-toolbar button:disabled{opacity:.55;cursor:wait}
 @media print{.print-download-toolbar{display:none}}
 @media(max-width:760px){.print-download-toolbar{align-items:flex-start;flex-direction:column;width:min(7in,100%)}.print-download-toolbar>div:last-child{flex-wrap:wrap}.smtp-note{grid-template-columns:1fr}.smtp-note>span,.secret-link{grid-column:1;grid-row:auto}.secret-checklist{grid-template-columns:1fr}}
+
+/* Printer-ready card geometry: the screen preview is exactly 2x the 3.75 × 2.25-inch export. */
+.review-card{width:7.5in;height:4.5in}
+.review-card:before{height:.18in}
+.print-page>.preview-back,.print-download-toolbar,.print-sheet{width:7.5in;max-width:100%}
+.print-sheet{overflow-x:auto}
+.print-download-toolbar>div:last-child{flex-wrap:wrap}
+.export-error{color:#a61b1b;font-size:13px}
+.platform-logo-stack,.platform-logo-stack>img{box-sizing:border-box}
+.platform-logo-stack>img{display:block;object-position:center}
+.platform-logo-stack>img{height:.6in!important;object-fit:fill!important}
+.card-live-preview{min-height:225px;overflow:hidden}
+.compact-card{transform:scale(.43);margin-bottom:-2.57in}
+@page{size:3.75in 2.25in;margin:0}
+@media print{html,body{width:3.75in;height:2.25in}.review-card{width:3.75in;height:2.25in}.review-card:before{height:.09in}.platform-logo-stack>img{height:.3in!important}}
+@media(max-width:760px){.print-download-toolbar{width:100%}}
+.provider-help{display:block;margin-top:12px;color:var(--muted);line-height:1.45}

@@ -27,7 +27,7 @@ export async function readMasterEmailSettings(){
   const db=client(); const secret=process.env.ANALYTICS_INGEST_SECRET;
   if(!db||!secret)return null;
   return await db.query(makeFunctionReference<"query">("emailSettings:forDelivery"),{secret}) as null|{
-    smtpHost:string;smtpPort:number;smtpUser:string;smtpPasswordCiphertext?:string;fromName:string;fromEmail:string;smtpTestRecipient?:string;
-    notifyEmailFailures?:boolean;failureAlertEmail?:string;alertSmtpHost?:string;alertSmtpPort?:number;alertSmtpUser?:string;alertSmtpPasswordCiphertext?:string;alertFromEmail?:string;
+    primaryDeliveryMethod?:"smtp"|"mailjet_api"|"sendpulse_api";smtpHost:string;smtpPort:number;smtpUser:string;smtpPasswordCiphertext?:string;fromName:string;fromEmail:string;smtpTestRecipient?:string;
+    notifyEmailFailures?:boolean;failureAlertEmail?:string;backupDeliveryMethod?:"smtp"|"mailjet_api"|"sendpulse_api";alertSmtpHost?:string;alertSmtpPort?:number;alertSmtpUser?:string;alertSmtpPasswordCiphertext?:string;alertFromEmail?:string;
   };
 }
