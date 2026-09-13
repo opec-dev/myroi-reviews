@@ -70,8 +70,8 @@
     radial-gradient(circle at 82% 84%, #c133ff18, transparent 32%), #09070b;
 }
 .login-card { border-color: #c133ff55; box-shadow: 0 28px 90px #00000099; }
-.login-brand { justify-content: center; margin: 0 0 18px; padding: 8px 16px; border-radius: 15px; background: #000000; }
-.login-brand img { width: 64px; height: 52px; }
+.login-brand { justify-content: center; margin: 0 0 18px; padding: 8px 16px; border: 1px solid #eadff0; border-radius: 15px; background: #ffffff; }
+.login-brand img { width: 76px; height: 52px; }
 .auth-notice { color: #64248a; background: var(--primary-soft); }
 
 .admin-page { background: linear-gradient(180deg, #f4eef7, #f8f7f9 260px); }

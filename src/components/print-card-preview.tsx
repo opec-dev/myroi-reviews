@@ -3,58 +3,528 @@
 import { CSSProperties, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { defaultBusinessBranding, defaultPrintSettings, demoBusiness, PrintSettings, type BusinessBranding } from "@/lib/demo-data";
+import {
+  defaultBusinessBranding,
+  defaultPrintSettings,
+  demoBusiness,
+  PrintSettings,
+  type BusinessBranding,
+} from "@/lib/demo-data";
 
 const EXPORT_WIDTH = 1125;
 const EXPORT_HEIGHT = 675;
 
-export function PrintCardPreview({ slug, qrSuffix }: { slug: string; qrSuffix: string }) {
+export function PrintCardPreview({
+  slug,
+  qrSuffix,
+}: {
+  slug: string;
+  qrSuffix: string;
+}) {
   const card = useQuery(api.printCards.publicBySlug, { slug });
-  const [exporting,setExporting] = useState<"front"|"back"|"pdf"|null>(null);
-  const [exportError,setExportError] = useState("");
-  if (card === undefined) return <p className="print-status">Loading printer-ready artwork…</p>;
-  if (card === null) return <p className="print-status">This client’s print card is not published.</p>;
-  const settings:PrintSettings = { ...defaultPrintSettings, ...(card.settings ?? {}) };
-  const branding:BusinessBranding = {
+  const [exporting, setExporting] = useState<"front" | "back" | "pdf" | null>(
+    null,
+  );
+  const [exportError, setExportError] = useState("");
+  if (card === undefined)
+    return <p className="print-status">Loading printer-ready artwork…</p>;
+  if (card === null)
+    return (
+      <p className="print-status">This client’s print card is not published.</p>
+    );
+  const settings: PrintSettings = {
+    ...defaultPrintSettings,
+    ...(card.settings ?? {}),
+  };
+  const branding: BusinessBranding = {
     logoUrl: card.business.logoUrl ?? defaultBusinessBranding.logoUrl,
     iconUrl: card.business.iconUrl ?? defaultBusinessBranding.iconUrl,
-    googleBadgeUrl: card.business.googleBadgeUrl ?? defaultBusinessBranding.googleBadgeUrl,
-    yelpBadgeUrl: card.business.yelpBadgeUrl ?? defaultBusinessBranding.yelpBadgeUrl,
+    googleBadgeUrl:
+      card.business.googleBadgeUrl ?? defaultBusinessBranding.googleBadgeUrl,
+    yelpBadgeUrl:
+      card.business.yelpBadgeUrl ?? defaultBusinessBranding.yelpBadgeUrl,
     primaryColor: card.business.primaryColor,
     secondaryColor: card.business.secondaryColor ?? card.business.primaryColor,
   };
-  async function render(face:"front"|"back") { return drawPrintCard(face,settings,branding,`/api/qr/${slug}${qrSuffix}`) }
-  function saveBlob(blob:Blob,name:string){const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=name;link.style.display="none";document.body.append(link);link.click();setTimeout(()=>{link.remove();URL.revokeObjectURL(url)},30_000)}
-  async function canvasBlob(canvas:HTMLCanvasElement){return await new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("The browser could not create the image file.")),"image/png"))}
-  async function runExport(target:"front"|"back"|"pdf",work:()=>Promise<void>){setExportError("");setExporting(target);try{await work()}catch(error){setExportError(error instanceof Error?error.message:"The printer-ready file could not be created.")}finally{setExporting(null)}}
-  function downloadPng(face:"front"|"back"){void runExport(face,async()=>saveBlob(await canvasBlob(await render(face)),`${slug}-review-card-${face}-300dpi.png`))}
-  function downloadPdf(){void runExport("pdf",async()=>{const [front,back]=await Promise.all([render("front"),render("back")]);saveBlob(buildImagePdf([front,back]),`${slug}-review-card-front-back-300dpi.pdf`)})}
-  return <><section className="print-download-toolbar"><div><strong>Printer-ready files</strong><span>3.75 × 2.25 inches with 0.125-inch bleed at 300 DPI. The PDF uses CMYK color; no crop marks.</span>{exportError&&<b className="export-error">{exportError}</b>}</div><div><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("front")}>{exporting==="front"?"Preparing…":"Download front PNG"}</button><button className="button" disabled={Boolean(exporting)} onClick={()=>downloadPng("back")}>{exporting==="back"?"Preparing…":"Download back PNG"}</button><button className="button primary" disabled={Boolean(exporting)} onClick={downloadPdf}>{exporting==="pdf"?"Preparing PDF…":"Download 2-page PDF"}</button></div></section><div className="print-sheet"><div><span>Front</span><CardArtwork face="front" settings={settings} branding={branding} businessName={card.business.name} slug={slug} qrSuffix={qrSuffix} /></div><div className="print-break"><span>Back</span><CardArtwork face="back" settings={settings} branding={branding} businessName={card.business.name} slug={slug} qrSuffix={qrSuffix} /></div></div></>;
-}
-
-export function CardArtwork({ face, settings, branding = defaultBusinessBranding, businessName = demoBusiness.name, slug = demoBusiness.slug, qrSuffix = ".svg", compact = false }: { face:"front"|"back"; settings:PrintSettings; branding?:BusinessBranding; businessName?:string; slug?:string; qrSuffix?:string; compact?:boolean }) {
-  const style = { "--card-title-scale": settings.titleSize / 37, "--card-subtitle-scale": settings.subtitleSize / 17, "--card-title-color": settings.titleColor, "--card-back-title-scale": settings.backTitleSize / 44, "--card-back-subtitle-scale": settings.backSubtitleSize / 18, "--card-back-title-color": settings.backTitleColor, "--client-primary": branding.primaryColor, "--client-secondary": branding.secondaryColor } as CSSProperties;
-  if (face === "back") return <section className={`review-card card-back ${compact ? "compact-card" : ""}`} style={style}><div className="back-brand"><img src={branding.logoUrl} alt={`${businessName} logo`} /></div><div className="back-message"><h1>{settings.backTitle}</h1><p>{settings.backSubtitle}</p><small>{settings.backFooter}</small></div></section>;
-  return <section className={`review-card ${compact ? "compact-card" : ""}`} style={style} aria-label={`${businessName} review request card`}><div className="review-card-grid"><div className="review-card-copy"><img src={branding.logoUrl} alt={`${businessName} logo`} /><h1>{settings.title}</h1><p>{settings.subtitle}</p><div className="contact-lines"><span>{settings.phone}</span><span>{settings.website}</span></div></div><div className="card-qr"><div className="qr-art"><img src={`/api/qr/${slug}${qrSuffix}`} alt="QR code to leave a review" /><span aria-hidden="true"><img src={branding.iconUrl} alt="" /></span></div><strong>{settings.scanLabel}</strong><div className="platform-logo-stack">{settings.platformBadges.includes("google") && <img src={branding.googleBadgeUrl??"/brands/review-us-google.svg"} alt="Review us on Google" />}{settings.platformBadges.includes("yelp") && <img src={branding.yelpBadgeUrl??"/brands/review-us-yelp.svg"} alt="Review us on Yelp" />}</div></div></div></section>;
-}
-
-async function loadImage(src:string){return new Promise<HTMLImageElement>((resolve,reject)=>{const image=new Image();image.crossOrigin="anonymous";image.onload=()=>resolve(image);image.onerror=()=>reject(new Error(`Could not load ${src}`));image.src=src})}
-function contain(ctx:CanvasRenderingContext2D,image:HTMLImageElement,x:number,y:number,width:number,height:number){const scale=Math.min(width/image.naturalWidth,height/image.naturalHeight);const w=image.naturalWidth*scale,h=image.naturalHeight*scale;ctx.drawImage(image,x+(width-w)/2,y+(height-h)/2,w,h)}
-function fittedFont(ctx:CanvasRenderingContext2D,text:string,size:number,family:string,maxWidth:number,minSize:number){let fitted=size;ctx.font=`${fitted}px ${family}`;while(fitted>minSize&&ctx.measureText(text).width>maxWidth){fitted-=2;ctx.font=`${fitted}px ${family}`}return fitted}
-function wrap(ctx:CanvasRenderingContext2D,text:string,x:number,y:number,width:number,lineHeight:number,maxLines=4){const words=text.split(/\s+/);let line="",row=0;for(const word of words){const next=line?`${line} ${word}`:word;if(ctx.measureText(next).width>width&&line){ctx.fillText(line,x,y+row*lineHeight);row++;line=word;if(row>=maxLines)return}else line=next}if(line&&row<maxLines)ctx.fillText(line,x,y+row*lineHeight)}
-function roundedRect(ctx:CanvasRenderingContext2D,x:number,y:number,width:number,height:number,radius:number){ctx.beginPath();ctx.roundRect(x,y,width,height,radius);ctx.fill()}
-
-async function drawPrintCard(face:"front"|"back",settings:PrintSettings,branding:BusinessBranding,qrUrl:string){
-  const canvas=document.createElement("canvas");canvas.width=EXPORT_WIDTH;canvas.height=EXPORT_HEIGHT;const ctx=canvas.getContext("2d");if(!ctx)throw new Error("Canvas is unavailable");ctx.fillStyle="#fff";ctx.fillRect(0,0,EXPORT_WIDTH,EXPORT_HEIGHT);ctx.fillStyle=branding.secondaryColor;ctx.fillRect(0,0,248,54);ctx.fillStyle=branding.primaryColor;ctx.fillRect(248,0,EXPORT_WIDTH-248,54);
-  const logo=await loadImage(branding.logoUrl);
-  if(face==="back"){
-    contain(ctx,logo,75,120,450,300);ctx.fillStyle="#d8dde6";ctx.fillRect(562,95,2,485);ctx.textAlign="center";ctx.fillStyle=settings.backTitleColor;const titleSize=fittedFont(ctx,settings.backTitle,Math.round(settings.backTitleSize*1.5),"italic 700 Georgia,serif",430,34);ctx.font=`italic 700 ${titleSize}px Georgia,serif`;ctx.fillText(settings.backTitle,835,245);ctx.fillStyle="#52657b";ctx.font=`${Math.round(settings.backSubtitleSize*1.5)}px Arial,sans-serif`;wrap(ctx,settings.backSubtitle,835,320,430,42,4);ctx.font="20px Arial,sans-serif";ctx.fillText(settings.backFooter,835,490);return canvas;
+  async function render(face: "front" | "back") {
+    return drawPrintCard(
+      face,
+      settings,
+      branding,
+      `/api/qr/${slug}${qrSuffix}`,
+    );
   }
-  contain(ctx,logo,65,72,500,120);ctx.textAlign="left";ctx.fillStyle=settings.titleColor;ctx.font=`700 ${Math.round(settings.titleSize*1.5)}px Arial,sans-serif`;wrap(ctx,settings.title,65,245,570,60,2);ctx.fillStyle="#52657b";ctx.font=`${Math.round(settings.subtitleSize*1.5)}px Arial,sans-serif`;wrap(ctx,settings.subtitle,65,375,570,38,4);ctx.fillStyle=branding.primaryColor;ctx.font="700 20px Arial,sans-serif";ctx.fillText(settings.phone,65,555);ctx.fillText(settings.website,65,588);
-  const [qr,icon,google,yelp]=await Promise.all([loadImage(qrUrl),loadImage(branding.iconUrl),loadImage(branding.googleBadgeUrl??"/brands/review-us-google.svg"),loadImage(branding.yelpBadgeUrl??"/brands/review-us-yelp.svg")]);ctx.drawImage(qr,760,72,265,265);ctx.fillStyle="#fff";roundedRect(ctx,851,163,84,84,14);contain(ctx,icon,859,171,68,68);ctx.textAlign="center";ctx.fillStyle="#102c50";ctx.font="700 31px Arial,sans-serif";ctx.fillText(settings.scanLabel,892,378);let badgeY=405;if(settings.platformBadges.includes("google")){ctx.drawImage(google,760,badgeY,265,109);badgeY+=112}if(settings.platformBadges.includes("yelp"))ctx.drawImage(yelp,760,badgeY,265,109);return canvas;
+  function saveBlob(blob: Blob, name: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    link.style.display = "none";
+    document.body.append(link);
+    link.click();
+    setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, 30_000);
+  }
+  async function canvasBlob(canvas: HTMLCanvasElement) {
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (blob) =>
+          blob
+            ? resolve(blob)
+            : reject(new Error("The browser could not create the image file.")),
+        "image/png",
+      ),
+    );
+  }
+  async function runExport(
+    target: "front" | "back" | "pdf",
+    work: () => Promise<void>,
+  ) {
+    setExportError("");
+    setExporting(target);
+    try {
+      await work();
+    } catch (error) {
+      setExportError(
+        error instanceof Error
+          ? error.message
+          : "The printer-ready file could not be created.",
+      );
+    } finally {
+      setExporting(null);
+    }
+  }
+  function downloadPng(face: "front" | "back") {
+    void runExport(face, async () =>
+      saveBlob(
+        await canvasBlob(await render(face)),
+        `${slug}-review-card-${face}-300dpi.png`,
+      ),
+    );
+  }
+  function downloadPdf() {
+    void runExport("pdf", async () => {
+      const [front, back] = await Promise.all([
+        render("front"),
+        render("back"),
+      ]);
+      saveBlob(
+        buildImagePdf([front, back]),
+        `${slug}-review-card-front-back-300dpi.pdf`,
+      );
+    });
+  }
+  return (
+    <>
+      <section className="print-download-toolbar">
+        <div>
+          <strong>Printer-ready files</strong>
+          <span>
+            3.75 × 2.25 inches with 0.125-inch bleed at 300 DPI. The PDF uses
+            CMYK color; no crop marks.
+          </span>
+          {exportError && <b className="export-error">{exportError}</b>}
+        </div>
+        <div>
+          <button
+            className="button"
+            disabled={Boolean(exporting)}
+            onClick={() => downloadPng("front")}
+          >
+            {exporting === "front" ? "Preparing…" : "Download front PNG"}
+          </button>
+          <button
+            className="button"
+            disabled={Boolean(exporting)}
+            onClick={() => downloadPng("back")}
+          >
+            {exporting === "back" ? "Preparing…" : "Download back PNG"}
+          </button>
+          <button
+            className="button primary"
+            disabled={Boolean(exporting)}
+            onClick={downloadPdf}
+          >
+            {exporting === "pdf" ? "Preparing PDF…" : "Download 2-page PDF"}
+          </button>
+        </div>
+      </section>
+      <div className="print-sheet">
+        <div>
+          <span>Front</span>
+          <CardArtwork
+            face="front"
+            settings={settings}
+            branding={branding}
+            businessName={card.business.name}
+            slug={slug}
+            qrSuffix={qrSuffix}
+          />
+        </div>
+        <div className="print-break">
+          <span>Back</span>
+          <CardArtwork
+            face="back"
+            settings={settings}
+            branding={branding}
+            businessName={card.business.name}
+            slug={slug}
+            qrSuffix={qrSuffix}
+          />
+        </div>
+      </div>
+    </>
+  );
 }
 
-function ascii(value:string){return new TextEncoder().encode(value)}
-function join(parts:Uint8Array[]){const length=parts.reduce((sum,part)=>sum+part.length,0);const result=new Uint8Array(length);let offset=0;for(const part of parts){result.set(part,offset);offset+=part.length}return result}
-function canvasToCmyk(canvas:HTMLCanvasElement){const rgba=canvas.getContext("2d")!.getImageData(0,0,canvas.width,canvas.height).data;const cmyk=new Uint8Array(canvas.width*canvas.height*4);for(let s=0,d=0;s<rgba.length;s+=4,d+=4){const r=rgba[s],g=rgba[s+1],b=rgba[s+2],k=255-Math.max(r,g,b);cmyk[d]=k===255?0:Math.round((255-r-k)*255/(255-k));cmyk[d+1]=k===255?0:Math.round((255-g-k)*255/(255-k));cmyk[d+2]=k===255?0:Math.round((255-b-k)*255/(255-k));cmyk[d+3]=k}return cmyk}
-function buildImagePdf(canvases:HTMLCanvasElement[]){const images=canvases.map(canvasToCmyk);const objects:Uint8Array[]=[];const paint1=ascii("q 270 0 0 162 0 0 cm /Im1 Do Q");const paint2=ascii("q 270 0 0 162 0 0 cm /Im2 Do Q");objects[1]=ascii("<< /Type /Catalog /Pages 2 0 R >>");objects[2]=ascii("<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>");objects[3]=ascii("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 270 162] /Resources << /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>");objects[4]=ascii("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 270 162] /Resources << /XObject << /Im2 7 0 R >> >> /Contents 8 0 R >>");objects[5]=join([ascii(`<< /Type /XObject /Subtype /Image /Width ${EXPORT_WIDTH} /Height ${EXPORT_HEIGHT} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Length ${images[0].length} >>\nstream\n`),images[0],ascii("\nendstream")]);objects[6]=join([ascii(`<< /Length ${paint1.length} >>\nstream\n`),paint1,ascii("\nendstream")]);objects[7]=join([ascii(`<< /Type /XObject /Subtype /Image /Width ${EXPORT_WIDTH} /Height ${EXPORT_HEIGHT} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Length ${images[1].length} >>\nstream\n`),images[1],ascii("\nendstream")]);objects[8]=join([ascii(`<< /Length ${paint2.length} >>\nstream\n`),paint2,ascii("\nendstream")]);const parts=[ascii("%PDF-1.4\n")];const offsets=[0];let length=parts[0].length;for(let i=1;i<=8;i++){offsets[i]=length;const object=join([ascii(`${i} 0 obj\n`),objects[i],ascii("\nendobj\n")]);parts.push(object);length+=object.length}const xrefOffset=length;let xref="xref\n0 9\n0000000000 65535 f \n";for(let i=1;i<=8;i++)xref+=`${String(offsets[i]).padStart(10,"0")} 00000 n \n`;parts.push(ascii(`${xref}trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`));return new Blob([join(parts)],{type:"application/pdf"})}
+export function CardArtwork({
+  face,
+  settings,
+  branding = defaultBusinessBranding,
+  businessName = demoBusiness.name,
+  slug = demoBusiness.slug,
+  qrSuffix = ".svg",
+  compact = false,
+}: {
+  face: "front" | "back";
+  settings: PrintSettings;
+  branding?: BusinessBranding;
+  businessName?: string;
+  slug?: string;
+  qrSuffix?: string;
+  compact?: boolean;
+}) {
+  const style = {
+    "--card-title-scale": settings.titleSize / 37,
+    "--card-subtitle-scale": settings.subtitleSize / 17,
+    "--card-title-color": settings.titleColor,
+    "--card-back-title-scale": settings.backTitleSize / 44,
+    "--card-back-subtitle-scale": settings.backSubtitleSize / 18,
+    "--card-back-title-color": settings.backTitleColor,
+    "--client-primary": branding.primaryColor,
+    "--client-secondary": branding.secondaryColor,
+  } as CSSProperties;
+  if (face === "back")
+    return (
+      <section
+        className={`review-card card-back ${compact ? "compact-card" : ""}`}
+        style={style}
+      >
+        <div className="back-brand">
+          <img src={branding.logoUrl} alt={`${businessName} logo`} />
+        </div>
+        <div className="back-message">
+          <h1>{settings.backTitle}</h1>
+          <p>{settings.backSubtitle}</p>
+          <small>{settings.backFooter}</small>
+        </div>
+      </section>
+    );
+  return (
+    <section
+      className={`review-card ${compact ? "compact-card" : ""}`}
+      style={style}
+      aria-label={`${businessName} review request card`}
+    >
+      <div className="review-card-grid">
+        <div className="review-card-copy">
+          <img src={branding.logoUrl} alt={`${businessName} logo`} />
+          <h1>{settings.title}</h1>
+          <p>{settings.subtitle}</p>
+          <div className="contact-lines">
+            <span>{settings.phone}</span>
+            <span>{settings.website}</span>
+          </div>
+        </div>
+        <div className="card-qr">
+          <div className="qr-art">
+            <img
+              src={`/api/qr/${slug}${qrSuffix}`}
+              alt="QR code to leave a review"
+            />
+            <span aria-hidden="true">
+              <img src={branding.iconUrl} alt="" />
+            </span>
+          </div>
+          <strong>{settings.scanLabel}</strong>
+          <div className="platform-logo-stack">
+            {settings.platformBadges.includes("google") && (
+              <img
+                src={branding.googleBadgeUrl ?? "/brands/review-us-google.svg"}
+                alt="Review us on Google"
+              />
+            )}
+            {settings.platformBadges.includes("yelp") && (
+              <img
+                src={branding.yelpBadgeUrl ?? "/brands/review-us-yelp.svg"}
+                alt="Review us on Yelp"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Could not load ${src}`));
+    image.src = src;
+  });
+}
+function contain(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const scale = Math.min(
+    width / image.naturalWidth,
+    height / image.naturalHeight,
+  );
+  const w = image.naturalWidth * scale,
+    h = image.naturalHeight * scale;
+  ctx.drawImage(image, x + (width - w) / 2, y + (height - h) / 2, w, h);
+}
+function fullWidth(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  maxHeight: number,
+) {
+  const height = Math.min(
+    maxHeight,
+    (width * image.naturalHeight) / image.naturalWidth,
+  );
+  ctx.drawImage(image, x, y, width, height);
+}
+function fittedFont(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  size: number,
+  family: string,
+  maxWidth: number,
+  minSize: number,
+) {
+  let fitted = size;
+  ctx.font = `${fitted}px ${family}`;
+  while (fitted > minSize && ctx.measureText(text).width > maxWidth) {
+    fitted -= 2;
+    ctx.font = `${fitted}px ${family}`;
+  }
+  return fitted;
+}
+function wrap(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  lineHeight: number,
+  maxLines = 4,
+) {
+  const words = text.split(/\s+/);
+  let line = "",
+    row = 0;
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width > width && line) {
+      ctx.fillText(line, x, y + row * lineHeight);
+      row++;
+      line = word;
+      if (row >= maxLines) return;
+    } else line = next;
+  }
+  if (line && row < maxLines) ctx.fillText(line, x, y + row * lineHeight);
+}
+function roundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.fill();
+}
+
+async function drawPrintCard(
+  face: "front" | "back",
+  settings: PrintSettings,
+  branding: BusinessBranding,
+  qrUrl: string,
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = EXPORT_WIDTH;
+  canvas.height = EXPORT_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is unavailable");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT);
+  ctx.fillStyle = branding.secondaryColor;
+  ctx.fillRect(0, 0, 248, 54);
+  ctx.fillStyle = branding.primaryColor;
+  ctx.fillRect(248, 0, EXPORT_WIDTH - 248, 54);
+  const logo = await loadImage(branding.logoUrl);
+  if (face === "back") {
+    contain(ctx, logo, 75, 120, 450, 300);
+    ctx.fillStyle = "#d8dde6";
+    ctx.fillRect(562, 95, 2, 485);
+    ctx.textAlign = "center";
+    ctx.fillStyle = settings.backTitleColor;
+    const titleSize = fittedFont(
+      ctx,
+      settings.backTitle,
+      Math.round(settings.backTitleSize * 1.5),
+      "italic 700 Georgia,serif",
+      430,
+      34,
+    );
+    ctx.font = `italic 700 ${titleSize}px Georgia,serif`;
+    ctx.fillText(settings.backTitle, 835, 245);
+    ctx.fillStyle = "#52657b";
+    ctx.font = `${Math.round(settings.backSubtitleSize * 1.5)}px Arial,sans-serif`;
+    wrap(ctx, settings.backSubtitle, 835, 320, 430, 42, 4);
+    ctx.font = "20px Arial,sans-serif";
+    ctx.fillText(settings.backFooter, 835, 490);
+    return canvas;
+  }
+  contain(ctx, logo, 65, 72, 500, 120);
+  ctx.textAlign = "left";
+  ctx.fillStyle = settings.titleColor;
+  ctx.font = `700 ${Math.round(settings.titleSize * 1.5)}px Arial,sans-serif`;
+  wrap(ctx, settings.title, 65, 245, 570, 60, 2);
+  ctx.fillStyle = "#52657b";
+  ctx.font = `${Math.round(settings.subtitleSize * 1.5)}px Arial,sans-serif`;
+  wrap(ctx, settings.subtitle, 65, 375, 570, 38, 4);
+  ctx.fillStyle = branding.primaryColor;
+  ctx.font = "700 20px Arial,sans-serif";
+  ctx.fillText(settings.phone, 65, 555);
+  ctx.fillText(settings.website, 65, 588);
+  const [qr, icon, google, yelp] = await Promise.all([
+    loadImage(qrUrl),
+    loadImage(branding.iconUrl),
+    loadImage(branding.googleBadgeUrl ?? "/brands/review-us-google.svg"),
+    loadImage(branding.yelpBadgeUrl ?? "/brands/review-us-yelp.svg"),
+  ]);
+  ctx.drawImage(qr, 760, 72, 265, 265);
+  ctx.fillStyle = "#fff";
+  roundedRect(ctx, 851, 163, 84, 84, 14);
+  contain(ctx, icon, 859, 171, 68, 68);
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#102c50";
+  ctx.font = "700 31px Arial,sans-serif";
+  ctx.fillText(settings.scanLabel, 892, 378);
+  let badgeY = 405;
+  if (settings.platformBadges.includes("google")) {
+    fullWidth(ctx, google, 760, badgeY, 265, 119);
+    badgeY += 114;
+  }
+  if (settings.platformBadges.includes("yelp"))
+    fullWidth(ctx, yelp, 760, badgeY, 265, 119);
+  return canvas;
+}
+
+function ascii(value: string) {
+  return new TextEncoder().encode(value);
+}
+function join(parts: Uint8Array[]) {
+  const length = parts.reduce((sum, part) => sum + part.length, 0);
+  const result = new Uint8Array(length);
+  let offset = 0;
+  for (const part of parts) {
+    result.set(part, offset);
+    offset += part.length;
+  }
+  return result;
+}
+function canvasToCmyk(canvas: HTMLCanvasElement) {
+  const rgba = canvas
+    .getContext("2d")!
+    .getImageData(0, 0, canvas.width, canvas.height).data;
+  const cmyk = new Uint8Array(canvas.width * canvas.height * 4);
+  for (let s = 0, d = 0; s < rgba.length; s += 4, d += 4) {
+    const r = rgba[s],
+      g = rgba[s + 1],
+      b = rgba[s + 2],
+      k = 255 - Math.max(r, g, b);
+    cmyk[d] = k === 255 ? 0 : Math.round(((255 - r - k) * 255) / (255 - k));
+    cmyk[d + 1] = k === 255 ? 0 : Math.round(((255 - g - k) * 255) / (255 - k));
+    cmyk[d + 2] = k === 255 ? 0 : Math.round(((255 - b - k) * 255) / (255 - k));
+    cmyk[d + 3] = k;
+  }
+  return cmyk;
+}
+function buildImagePdf(canvases: HTMLCanvasElement[]) {
+  const images = canvases.map(canvasToCmyk);
+  const objects: Uint8Array[] = [];
+  const paint1 = ascii("q 270 0 0 162 0 0 cm /Im1 Do Q");
+  const paint2 = ascii("q 270 0 0 162 0 0 cm /Im2 Do Q");
+  objects[1] = ascii("<< /Type /Catalog /Pages 2 0 R >>");
+  objects[2] = ascii("<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>");
+  objects[3] = ascii(
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 270 162] /Resources << /XObject << /Im1 5 0 R >> >> /Contents 6 0 R >>",
+  );
+  objects[4] = ascii(
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 270 162] /Resources << /XObject << /Im2 7 0 R >> >> /Contents 8 0 R >>",
+  );
+  objects[5] = join([
+    ascii(
+      `<< /Type /XObject /Subtype /Image /Width ${EXPORT_WIDTH} /Height ${EXPORT_HEIGHT} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Length ${images[0].length} >>\nstream\n`,
+    ),
+    images[0],
+    ascii("\nendstream"),
+  ]);
+  objects[6] = join([
+    ascii(`<< /Length ${paint1.length} >>\nstream\n`),
+    paint1,
+    ascii("\nendstream"),
+  ]);
+  objects[7] = join([
+    ascii(
+      `<< /Type /XObject /Subtype /Image /Width ${EXPORT_WIDTH} /Height ${EXPORT_HEIGHT} /ColorSpace /DeviceCMYK /BitsPerComponent 8 /Length ${images[1].length} >>\nstream\n`,
+    ),
+    images[1],
+    ascii("\nendstream"),
+  ]);
+  objects[8] = join([
+    ascii(`<< /Length ${paint2.length} >>\nstream\n`),
+    paint2,
+    ascii("\nendstream"),
+  ]);
+  const parts = [ascii("%PDF-1.4\n")];
+  const offsets = [0];
+  let length = parts[0].length;
+  for (let i = 1; i <= 8; i++) {
+    offsets[i] = length;
+    const object = join([
+      ascii(`${i} 0 obj\n`),
+      objects[i],
+      ascii("\nendobj\n"),
+    ]);
+    parts.push(object);
+    length += object.length;
+  }
+  const xrefOffset = length;
+  let xref = "xref\n0 9\n0000000000 65535 f \n";
+  for (let i = 1; i <= 8; i++)
+    xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`;
+  parts.push(
+    ascii(
+      `${xref}trailer\n<< /Size 9 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`,
+    ),
+  );
+  return new Blob([join(parts)], { type: "application/pdf" });
+}
