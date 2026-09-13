@@ -49,7 +49,7 @@ async function sendWithMailjet(config:SmtpConfiguration|AlertSmtpConfiguration,m
 }
 
 async function sendWithSendPulse(config:SmtpConfiguration|AlertSmtpConfiguration,message:EmailMessage):Promise<EmailDeliveryResult>{
-  const response=await fetch("https://api.sendpulse.com/smtp/emails",{method:"POST",headers:{authorization:`Bearer ${config.password}`,"content-type":"application/json"},body:JSON.stringify({email:{text:Buffer.from(message.text).toString("base64"),subject:message.subject,from:{name:message.fromName,email:message.fromEmail},to:[{name:"",email:message.to}],...(message.replyTo?{reply_to:{name:"",email:message.replyTo}}:{})}}),signal:AbortSignal.timeout(15_000)});
+  const response=await fetch("https://api.sendpulse.com/smtp/emails",{method:"POST",headers:{Authorization:`Bearer ${config.password.trim()}`,"content-type":"application/json"},body:JSON.stringify({email:{text:message.text,subject:message.subject,from:{name:message.fromName,email:message.fromEmail},to:[{name:"",email:message.to}],...(message.replyTo?{reply_to:{name:"",email:message.replyTo}}:{})}}),cache:"no-store",signal:AbortSignal.timeout(15_000)});
   const payload=await response.json().catch(()=>null) as null|{result?:boolean;id?:string;error?:string;message?:string};
   if(!response.ok||payload?.result!==true)throw new Error(`SendPulse rejected the message (${response.status})${payload?.message||payload?.error?`: ${payload.message??payload.error}`:"."}`);
   return{messageId:payload.id??"sendpulse-accepted",transport:"sendpulse_api"};

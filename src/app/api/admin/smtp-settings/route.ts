@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { api } from "../../../../../convex/_generated/api";
 import { encryptSmtpSecret } from "@/lib/smtp-secrets";
+import {
+  normalizeSendPulseApiKey,
+  verifySendPulseApiKey,
+} from "@/lib/sendpulse";
 
 const schema = z.object({
   primaryDeliveryMethod: z.enum(["smtp", "mailjet_api", "sendpulse_api"]),
@@ -130,11 +134,43 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   const { smtpPassword, alertSmtpPassword, ...values } = parsed.data;
-  const smtpPasswordCiphertext = smtpPassword
-    ? await encryptSmtpSecret(smtpPassword)
+  const normalizedSmtpPassword = smtpPassword
+    ? parsed.data.primaryDeliveryMethod === "sendpulse_api"
+      ? normalizeSendPulseApiKey(smtpPassword)
+      : smtpPassword
     : undefined;
-  const alertSmtpPasswordCiphertext = alertSmtpPassword
-    ? await encryptSmtpSecret(alertSmtpPassword)
+  const normalizedAlertSmtpPassword = alertSmtpPassword
+    ? parsed.data.backupDeliveryMethod === "sendpulse_api"
+      ? normalizeSendPulseApiKey(alertSmtpPassword)
+      : alertSmtpPassword
+    : undefined;
+  try {
+    await Promise.all([
+      ...(normalizedSmtpPassword &&
+      parsed.data.primaryDeliveryMethod === "sendpulse_api"
+        ? [verifySendPulseApiKey(normalizedSmtpPassword)]
+        : []),
+      ...(normalizedAlertSmtpPassword &&
+      parsed.data.backupDeliveryMethod === "sendpulse_api"
+        ? [verifySendPulseApiKey(normalizedAlertSmtpPassword)]
+        : []),
+    ]);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "SendPulse could not verify the API key.",
+      },
+      { status: 400 },
+    );
+  }
+  const smtpPasswordCiphertext = normalizedSmtpPassword
+    ? await encryptSmtpSecret(normalizedSmtpPassword)
+    : undefined;
+  const alertSmtpPasswordCiphertext = normalizedAlertSmtpPassword
+    ? await encryptSmtpSecret(normalizedAlertSmtpPassword)
     : undefined;
   await convex.mutation(api.emailSettings.saveSecure, {
     ...values,
