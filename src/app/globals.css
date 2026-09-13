@@ -94,3 +94,19 @@
 .branding-upload-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .brand-upload img{max-width:100%}
 @media(max-width:700px){.branding-upload-row{grid-template-columns:1fr}}
+
+/* Form feedback and constrained admin layouts. */
+.settings-grid input[type="color"]{height:46px;padding:4px;overflow:hidden;cursor:pointer;background:#fff}
+.settings-grid input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
+.settings-grid input[type="color"]::-webkit-color-swatch{border:0;border-radius:6px}
+.settings-grid input[type="color"]::-moz-color-swatch{border:0;border-radius:6px}
+.settings-save button:disabled,.review-import-actions button:disabled{opacity:.55;cursor:wait}
+.save-error{color:#a11919!important;font-weight:700}
+.topbar>div:nth-child(2){display:grid;gap:3px;min-width:0}
+.topbar>div:nth-child(2)>strong,.topbar>div:nth-child(2)>small{display:block}
+.activity-card{overflow:hidden}
+.activity-list>div>span:first-child{flex:1 1 auto;min-width:0;overflow:hidden}
+.activity-list>div>span:last-child{flex:0 0 auto;justify-items:end}
+.activity-list small{display:block;max-width:100%}
+.provider-history{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:12px}
+@media(max-width:560px){.activity-list>div>span:last-child{justify-items:start}.delivery-status{margin-left:0}}

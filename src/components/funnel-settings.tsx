@@ -13,13 +13,19 @@ export function FunnelSettingsEditor({businessId,business}:{businessId:Id<"busin
   const [settings, setSettings] = useState(defaultFunnelSettings);
   const [stage, setStage] = useState<PreviewStage>("rating");
   const [saved, setSaved] = useState(false);
-  useEffect(() => { if(stored)setSettings({...defaultFunnelSettings,...stored}); }, [stored]);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  useEffect(() => {
+    if (!stored) return;
+    const {_id:_idIgnored,_creationTime:_createdIgnored,businessId:_businessIgnored,...savedSettings}=stored;
+    setSettings({...defaultFunnelSettings,...savedSettings});
+  }, [stored]);
   function change(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const key = event.target.name as keyof FunnelSettings;
     const value = event.target instanceof HTMLInputElement && event.target.type === "checkbox" ? event.target.checked : key === "positiveThreshold" ? Number(event.target.value) : event.target.value;
-    setSettings(current => ({ ...current, [key]: value })); setSaved(false);
+    setSettings(current => ({ ...current, [key]: value })); setSaved(false);setSaveMessage("");
   }
-  async function save() { await saveSettings({businessId,...settings}); setSaved(true); }
+  async function save() { setSaving(true);setSaved(false);setSaveMessage("");try{await saveSettings({businessId,...settings});setSaved(true);setSaveMessage("Funnel settings saved.")}catch(error){setSaveMessage(error instanceof Error?error.message:"Funnel settings could not be saved.")}finally{setSaving(false)} }
   return <>
     <div className="section-heading"><div><span className="eyebrow">Good and recovery paths</span><h2>Review funnel editor</h2></div><a className="button" href={`/r/${business.slug}`} target="_blank">Open full funnel</a></div>
     <p className="panel-intro">Each section controls one customer-facing step. Use the live preview to confirm the wording before saving.</p>
@@ -37,7 +43,7 @@ export function FunnelSettingsEditor({businessId,business}:{businessId:Id<"busin
         <label>Completion headline<input name="completionHeadline" value={settings.completionHeadline} onChange={change} /></label><label>Completion message<textarea name="completionSubtext" value={settings.completionSubtext} onChange={change} /></label>
       </EditorSection>
     </div><FunnelMiniPreview settings={settings} stage={stage} business={business} /></div>
-    <div className="settings-save"><small>{saved ? "Saved to this client account." : "Every line can be customized per client."}</small><button className="button primary" onClick={save}>Save funnel settings</button></div>
+    <div className="settings-save"><small className={saveMessage&&!saved?"save-error":""}>{saveMessage||"Every line can be customized per client."}</small><button className="button primary" disabled={saving} onClick={()=>void save()}>{saving?"Saving…":"Save funnel settings"}</button></div>
   </>;
 }
 

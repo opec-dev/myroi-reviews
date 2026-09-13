@@ -111,6 +111,19 @@ export async function POST(request: Request) {
   const convex = new ConvexHttpClient(convexUrl);
   convex.setAuth(auth.accessToken);
   const current = await convex.query(api.emailSettings.mine, {});
+  const currentPrimaryMethod = current?.primaryDeliveryMethod ??
+    (current?.smtpHost?.includes("mailjet.com") ? "mailjet_api" : "smtp");
+  const currentBackupMethod = current?.backupDeliveryMethod ?? "smtp";
+  if (current && parsed.data.primaryDeliveryMethod !== currentPrimaryMethod && !parsed.data.smtpPassword)
+    return NextResponse.json(
+      { error: "Enter a new primary credential after changing the delivery method. Credentials are never reused across provider types." },
+      { status: 400 },
+    );
+  if (current && backupStarted && parsed.data.backupDeliveryMethod !== currentBackupMethod && !parsed.data.alertSmtpPassword)
+    return NextResponse.json(
+      { error: "Enter a new backup credential after changing the delivery method. Primary and backup credentials are stored independently." },
+      { status: 400 },
+    );
   if (!parsed.data.smtpPassword && !current?.smtpPasswordConfigured)
     return NextResponse.json(
       { error: "Enter the primary provider credential before saving." },
