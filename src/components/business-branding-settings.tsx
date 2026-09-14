@@ -186,7 +186,7 @@ export function BusinessBrandingSettings({
           />
         </label>
         <label className="wide-field">
-          Customer-owned review page URL <span>(optional)</span>
+          Customer-owned review link <span>(optional)</span>
           <input
             type="url"
             placeholder="https://customer-site.com/reviews"
@@ -199,10 +199,11 @@ export function BusinessBrandingSettings({
             }
           />
           <small>
-            This is only the destination for the popup’s “Read all reviews”
-            link. First create that page on the customer’s website and place
-            the review-wall iframe on it. No CNAME or DNS change is needed.
-            Leave blank to open the hosted myROI Reviews wall.
+            Shared links, business-card QR codes, and the popup’s “Read all
+            reviews” link use this address. First create this path on the
+            customer’s website and redirect it to the client’s hosted review
+            funnel, preserving the query string. No CNAME or DNS change is
+            needed. Leave blank to use the hosted myROI Reviews URL.
           </small>
         </label>
       </div>

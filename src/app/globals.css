@@ -110,3 +110,4 @@
 .activity-list small{display:block;max-width:100%}
 .provider-history{display:flex;align-items:center;gap:9px;margin-top:14px;color:var(--muted);font-size:12px}
 @media(max-width:560px){.activity-list>div>span:last-child{justify-items:start}.delivery-status{margin-left:0}}
+.share-link-note{display:block;margin-top:8px;color:var(--muted)}

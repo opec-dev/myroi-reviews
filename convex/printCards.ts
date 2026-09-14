@@ -6,7 +6,7 @@ const fields = {
   title: v.string(), subtitle: v.string(), phone: v.string(), website: v.string(), scanLabel: v.string(),
   titleSize: v.number(), subtitleSize: v.number(), titleColor: v.string(), backTitle: v.string(),
   backSubtitle: v.string(), backFooter: v.string(), backTitleSize: v.number(), backSubtitleSize: v.number(),
-  backTitleColor: v.string(), platformBadges: v.array(v.string()),
+  backTitleColor: v.string(), platformBadges: v.array(v.string()), additionalLogoStorageIds: v.optional(v.array(v.id("_storage"))),
 };
 
 export const forBusiness = query({ args: { businessId: v.id("businesses") }, handler: async (ctx, { businessId }) => {
@@ -43,5 +43,5 @@ export const save = mutation({ args: { businessId: v.id("businesses"), ...fields
   await requireBusinessAccess(ctx, args.businessId);
   const current = await ctx.db.query("printCardSettings").withIndex("by_business", q => q.eq("businessId", args.businessId)).unique();
   if (current) { const { businessId, ...values } = args; await ctx.db.patch(current._id, values); return current._id; }
-  return await ctx.db.insert("printCardSettings", { ...args, additionalLogoStorageIds: [] });
+  return await ctx.db.insert("printCardSettings", { ...args, additionalLogoStorageIds: args.additionalLogoStorageIds ?? [] });
 } });

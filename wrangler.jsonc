@@ -7,6 +7,21 @@
   ],
   "main": "vinext/server/fetch-handler",
   "keep_vars": true,
+  "routes": [
+    {
+      "pattern": "myroi-reviews.myroiagency.com",
+      "zone_name": "myroiagency.com",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_APP_URL": "https://myroi-reviews.myroiagency.com",
+    "NEXT_PUBLIC_CONVEX_SITE_URL": "https://confident-peacock-209.convex.site",
+    "NEXT_PUBLIC_CONVEX_URL": "https://confident-peacock-209.convex.cloud",
+    "NEXT_PUBLIC_WORKOS_REDIRECT_URI": "https://myroi-reviews.myroiagency.com/callback",
+    "PLATFORM_ADMIN_EMAILS": "oliver@sicconsulting.com,support-team@myroiagency.com",
+    "WORKOS_CLIENT_ID": "client_01M1WJVKFA3EC09CRA4CDCNCAR"
+  },
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "none",
