@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { demoBusiness } from "@/lib/demo-data";
+import { APP_ORIGIN } from "@/lib/auth-config";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,7 @@ export function generateStaticParams() {
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const appOrigin = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
-  let targetUrl = new URL(`/r/${encodeURIComponent(slug)}`, appOrigin);
+  let targetUrl = new URL(`/r/${encodeURIComponent(slug)}`, APP_ORIGIN);
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   if (convexUrl) {
     try {
@@ -40,6 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       "Content-Type": "image/svg+xml; charset=utf-8",
       "Cache-Control": "no-store",
       "Content-Disposition": `inline; filename="${slug}-review-qr.svg"`,
+      "X-QR-Target": target,
     },
   });
 }
