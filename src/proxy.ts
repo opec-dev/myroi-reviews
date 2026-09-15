@@ -1,10 +1,14 @@
 import { authkitProxy } from "@workos-inc/authkit-nextjs";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
+import { WORKOS_REDIRECT_URI } from "@/lib/auth-config";
 
-const securedProxy = authkitProxy({ middlewareAuth: { enabled: true, unauthenticatedPaths: ["/login"] } });
+const securedProxy = authkitProxy({
+  redirectUri: WORKOS_REDIRECT_URI,
+  middlewareAuth: { enabled: true, unauthenticatedPaths: ["/login"] },
+});
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
-  const configured = Boolean(process.env.WORKOS_CLIENT_ID && process.env.WORKOS_API_KEY && process.env.WORKOS_COOKIE_PASSWORD && process.env.NEXT_PUBLIC_WORKOS_REDIRECT_URI);
+  const configured = Boolean(process.env.WORKOS_CLIENT_ID && process.env.WORKOS_API_KEY && process.env.WORKOS_COOKIE_PASSWORD);
   if (!configured) return NextResponse.redirect(new URL("/login", request.url));
   return securedProxy(request, event);
 }
