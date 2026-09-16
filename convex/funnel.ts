@@ -3,32 +3,141 @@ import { v } from "convex/values";
 import { requireBusinessAccess } from "./helpers";
 
 const settings = {
-  showBusinessName: v.boolean(), ratingHeadline: v.string(), ratingSubtext: v.string(), positiveThreshold: v.number(), positiveHeadline: v.string(), positiveSubtext: v.string(), maybeLaterText: v.string(), completionHeadline: v.string(), completionSubtext: v.string(), recoveryHeadline: v.string(), recoverySubtext: v.string(), nameLabel: v.string(), contactLabel: v.string(), messageLabel: v.string(), submitText: v.string(), publicLinkText: v.string(),
+  ratingIcon: v.union(v.literal("star"), v.literal("heart")),
+  showBusinessName: v.boolean(),
+  ratingHeadline: v.string(),
+  ratingSubtext: v.string(),
+  positiveThreshold: v.number(),
+  positiveHeadline: v.string(),
+  positiveSubtext: v.string(),
+  maybeLaterText: v.string(),
+  completionHeadline: v.string(),
+  completionSubtext: v.string(),
+  recoveryHeadline: v.string(),
+  recoverySubtext: v.string(),
+  nameLabel: v.string(),
+  contactLabel: v.string(),
+  messageLabel: v.string(),
+  submitText: v.string(),
+  publicLinkText: v.string(),
 };
 
-export const forBusiness=query({args:{businessId:v.id("businesses")},handler:async(ctx,{businessId})=>{await requireBusinessAccess(ctx,businessId);return await ctx.db.query("funnelSettings").withIndex("by_business",q=>q.eq("businessId",businessId)).unique();}});
+export const forBusiness = query({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, { businessId }) => {
+    await requireBusinessAccess(ctx, businessId);
+    return await ctx.db
+      .query("funnelSettings")
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
+      .unique();
+  },
+});
 
-export const publicBySlug = query({ args: { slug: v.string() }, handler: async (ctx, { slug }) => {
-  const business = await ctx.db.query("businesses").withIndex("by_slug", q => q.eq("slug", slug)).unique();
-  if (!business || !business.isPublished) return null;
-  const [funnel, destinations] = await Promise.all([
-    ctx.db.query("funnelSettings").withIndex("by_business", q => q.eq("businessId", business._id)).unique(),
-    ctx.db.query("reviewDestinations").withIndex("by_business", q => q.eq("businessId", business._id)).collect(),
-  ]);
-  const [logoUrl,iconUrl]=await Promise.all([business.logoStorageId?ctx.storage.getUrl(business.logoStorageId):null,business.iconStorageId?ctx.storage.getUrl(business.iconStorageId):null]);
-  return { business:{...business,logoUrl,iconUrl}, funnel, destinations: destinations.filter(x => x.isEnabled) };
-}});
+export const publicBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    const business = await ctx.db
+      .query("businesses")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+    if (!business || !business.isPublished) return null;
+    const [funnel, destinations] = await Promise.all([
+      ctx.db
+        .query("funnelSettings")
+        .withIndex("by_business", (q) => q.eq("businessId", business._id))
+        .unique(),
+      ctx.db
+        .query("reviewDestinations")
+        .withIndex("by_business", (q) => q.eq("businessId", business._id))
+        .collect(),
+    ]);
+    const [logoUrl, iconUrl] = await Promise.all([
+      business.logoStorageId
+        ? ctx.storage.getUrl(business.logoStorageId)
+        : null,
+      business.iconStorageId
+        ? ctx.storage.getUrl(business.iconStorageId)
+        : null,
+    ]);
+    return {
+      business: { ...business, logoUrl, iconUrl },
+      funnel,
+      destinations: destinations.filter((x) => x.isEnabled),
+    };
+  },
+});
 
-export const saveSettings = mutation({ args: { businessId: v.id("businesses"), ...settings }, handler: async (ctx, args) => {
-  await requireBusinessAccess(ctx, args.businessId);
-  const current = await ctx.db.query("funnelSettings").withIndex("by_business", q => q.eq("businessId", args.businessId)).unique();
-  const { businessId, ...values } = args;
-  if (current) await ctx.db.patch(current._id, values); else await ctx.db.insert("funnelSettings", args);
-}});
+export const feedbackForBusiness = query({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, { businessId }) => {
+    await requireBusinessAccess(ctx, businessId);
+    return await ctx.db
+      .query("privateFeedback")
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
+      .order("desc")
+      .collect();
+  },
+});
+export const updateFeedbackStatus = mutation({
+  args: {
+    feedbackId: v.id("privateFeedback"),
+    status: v.union(
+      v.literal("new"),
+      v.literal("contacted"),
+      v.literal("resolved"),
+    ),
+  },
+  handler: async (ctx, { feedbackId, status }) => {
+    const feedback = await ctx.db.get(feedbackId);
+    if (!feedback) throw new Error("Feedback not found");
+    await requireBusinessAccess(ctx, feedback.businessId);
+    await ctx.db.patch(feedbackId, { status });
+  },
+});
 
-export const submitPrivateFeedback = mutation({ args: { slug: v.string(), rating: v.number(), name: v.optional(v.string()), contact: v.string(), message: v.string() }, handler: async (ctx, args) => {
-  const business = await ctx.db.query("businesses").withIndex("by_slug", q => q.eq("slug", args.slug)).unique();
-  if (!business || !business.isPublished) throw new Error("Business not found");
-  if (args.rating < 1 || args.rating > 5 || args.contact.length > 200 || args.message.length > 5000) throw new Error("Invalid feedback");
-  return await ctx.db.insert("privateFeedback", { businessId: business._id, rating: args.rating, name: args.name, contact: args.contact, message: args.message, status: "new" });
-}});
+export const saveSettings = mutation({
+  args: { businessId: v.id("businesses"), ...settings },
+  handler: async (ctx, args) => {
+    await requireBusinessAccess(ctx, args.businessId);
+    const current = await ctx.db
+      .query("funnelSettings")
+      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+      .unique();
+    const { businessId, ...values } = args;
+    if (current) await ctx.db.patch(current._id, values);
+    else await ctx.db.insert("funnelSettings", args);
+  },
+});
+
+export const submitPrivateFeedback = mutation({
+  args: {
+    slug: v.string(),
+    rating: v.number(),
+    name: v.optional(v.string()),
+    contact: v.string(),
+    message: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const business = await ctx.db
+      .query("businesses")
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+      .unique();
+    if (!business || !business.isPublished)
+      throw new Error("Business not found");
+    if (
+      args.rating < 1 ||
+      args.rating > 5 ||
+      args.contact.length > 200 ||
+      args.message.length > 5000
+    )
+      throw new Error("Invalid feedback");
+    return await ctx.db.insert("privateFeedback", {
+      businessId: business._id,
+      rating: args.rating,
+      name: args.name,
+      contact: args.contact,
+      message: args.message,
+      status: "new",
+    });
+  },
+});

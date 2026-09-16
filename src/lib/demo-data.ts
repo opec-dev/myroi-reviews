@@ -1,6 +1,14 @@
 export type ReviewProvider =
-  | "google" | "facebook" | "yelp" | "tripadvisor" | "trustpilot"
-  | "g2" | "capterra" | "healthgrades" | "diamond" | "custom";
+  | "google"
+  | "facebook"
+  | "yelp"
+  | "tripadvisor"
+  | "trustpilot"
+  | "g2"
+  | "capterra"
+  | "healthgrades"
+  | "diamond"
+  | "custom";
 
 export type ReviewDestination = {
   id: string;
@@ -12,7 +20,11 @@ export type ReviewDestination = {
   enabled: boolean;
 };
 
-export const reviewPlatformCatalog: Array<{ provider: ReviewProvider; name: string; color: string }> = [
+export const reviewPlatformCatalog: Array<{
+  provider: ReviewProvider;
+  name: string;
+  color: string;
+}> = [
   { provider: "google", name: "Google", color: "#4285f4" },
   { provider: "facebook", name: "Facebook", color: "#1877f2" },
   { provider: "yelp", name: "Yelp", color: "#d32323" },
@@ -30,26 +42,82 @@ export const funnelSettingsStorageKey = "myroi:funnel:yorkshire-roofing";
 export const printSettingsStorageKey = "myroi:print:yorkshire-roofing";
 export const privateFeedbackStorageKey = "myroi:feedback:yorkshire-roofing";
 export const resellerSettingsStorageKey = "myroi:reseller-settings";
-export const businessBrandingStorageKey = "myroi:business-branding:yorkshire-roofing";
+export const businessBrandingStorageKey =
+  "myroi:business-branding:yorkshire-roofing";
 export const analyticsStorageKey = "myroi:analytics-events";
 export const emailLogStorageKey = "myroi:email-delivery-log";
 export const pilotClientsStorageKey = "myroi:pilot-clients";
-export const clientNotificationSettingsStorageKey = "myroi:notifications:yorkshire-roofing";
+export const clientNotificationSettingsStorageKey =
+  "myroi:notifications:yorkshire-roofing";
 
-export type AnalyticsEventType = "funnel_view" | "qr_scan" | "rating_selected" | "private_feedback_submitted" | "destination_clicked" | "maybe_later" | "public_review_fallback";
-export type AnalyticsEvent = { id:string; businessSlug:string; type:AnalyticsEventType; occurredAt:string; sessionId:string; source?:string; destinationId?:string; destinationName?:string; rating?:number };
-export type EmailDeliveryLog = { id:string; businessSlug?:string; kind:"private_feedback"|"new_review"|"admin_failure_alert"|"invitation"|"smtp_test"; status:"sent"|"not_sent"|"failed"; recipient:string; subject:string; occurredAt:string; error?:string;providerRole?:"primary"|"backup" };
+export type AnalyticsEventType =
+  | "funnel_view"
+  | "qr_scan"
+  | "rating_selected"
+  | "private_feedback_submitted"
+  | "destination_clicked"
+  | "maybe_later"
+  | "public_review_fallback";
+export type AnalyticsEvent = {
+  id: string;
+  businessSlug: string;
+  type: AnalyticsEventType;
+  occurredAt: string;
+  sessionId: string;
+  source?: string;
+  destinationId?: string;
+  destinationName?: string;
+  rating?: number;
+};
+export type EmailDeliveryLog = {
+  id: string;
+  businessSlug?: string;
+  kind:
+    | "private_feedback"
+    | "new_review"
+    | "admin_failure_alert"
+    | "invitation"
+    | "smtp_test";
+  status: "sent" | "not_sent" | "failed";
+  recipient: string;
+  subject: string;
+  body?: string;
+  occurredAt: string;
+  error?: string;
+  providerRole?: "primary" | "backup";
+};
 
-export type BusinessBranding = { logoUrl:string; iconUrl:string; googleBadgeUrl?:string; yelpBadgeUrl?:string; primaryColor:string; secondaryColor:string };
-export type ClientNotificationSettings = { notificationEmail:string; notifyPrivateFeedback:boolean; notifyNewReviews:boolean };
+export type BusinessBranding = {
+  logoUrl: string;
+  iconUrl: string;
+  googleBadgeUrl?: string;
+  yelpBadgeUrl?: string;
+  primaryColor: string;
+  secondaryColor: string;
+};
+export type SocialProvider =
+  | "facebook"
+  | "instagram"
+  | "x"
+  | "tiktok"
+  | "youtube"
+  | "linkedin"
+  | "website";
+export type SocialLink = { provider: SocialProvider; url: string };
+export type ClientNotificationSettings = {
+  notificationEmail: string;
+  notifyPrivateFeedback: boolean;
+  notifyNewReviews: boolean;
+};
 
-export const defaultClientNotificationSettings:ClientNotificationSettings = {
-  notificationEmail:"opecora@sicconsulting.com",
-  notifyPrivateFeedback:true,
-  notifyNewReviews:false,
+export const defaultClientNotificationSettings: ClientNotificationSettings = {
+  notificationEmail: "opecora@sicconsulting.com",
+  notifyPrivateFeedback: true,
+  notifyNewReviews: false,
 };
 
 export type FunnelSettings = {
+  ratingIcon: "star" | "heart";
   showBusinessName: boolean;
   ratingHeadline: string;
   ratingSubtext: string;
@@ -69,17 +137,22 @@ export type FunnelSettings = {
 };
 
 export const defaultFunnelSettings: FunnelSettings = {
+  ratingIcon: "star",
   showBusinessName: false,
   ratingHeadline: "How was your experience?",
-  ratingSubtext: "Your feedback helps us serve you better. It only takes a few seconds.",
+  ratingSubtext:
+    "Your feedback helps us serve you better. It only takes a few seconds.",
   positiveThreshold: 4,
   positiveHeadline: "Thank you so much!",
-  positiveSubtext: "We're thrilled you had a great experience. Would you mind sharing it? It only takes a moment.",
+  positiveSubtext:
+    "We're thrilled you had a great experience. Would you mind sharing it? It only takes a moment.",
   maybeLaterText: "Maybe later",
   completionHeadline: "Thanks for your feedback!",
-  completionSubtext: "We truly appreciate you taking the time. You can close this window.",
+  completionSubtext:
+    "We truly appreciate you taking the time. You can close this window.",
   recoveryHeadline: "We're sorry we missed the mark",
-  recoverySubtext: "Tell us what went wrong and we'll make it right. Your feedback goes straight to the owner.",
+  recoverySubtext:
+    "Tell us what went wrong and we'll make it right. Your feedback goes straight to the owner.",
   nameLabel: "Your name",
   contactLabel: "Email or phone",
   messageLabel: "What went wrong?",
@@ -107,7 +180,8 @@ export type PrintSettings = {
 
 export const defaultPrintSettings: PrintSettings = {
   title: "Please Leave Us a Review",
-  subtitle: "Your feedback helps our business grow. Scan the code, choose a review site, and share your experience.",
+  subtitle:
+    "Your feedback helps our business grow. Scan the code, choose a review site, and share your experience.",
   phone: "(800) 794-7444",
   website: "yorkshireroofing.com",
   scanLabel: "Scan to review",
@@ -147,14 +221,22 @@ export const demoBusiness = {
   reviewUrl: "/r/yorkshire-roofing",
 };
 
-export const defaultBusinessBranding:BusinessBranding = { logoUrl:demoBusiness.logoUrl, iconUrl:demoBusiness.iconUrl, googleBadgeUrl:"/brands/review-us-google.svg", yelpBadgeUrl:"/brands/review-us-yelp.svg", primaryColor:demoBusiness.accent, secondaryColor:demoBusiness.accentSecondary };
+export const defaultBusinessBranding: BusinessBranding = {
+  logoUrl: demoBusiness.logoUrl,
+  iconUrl: demoBusiness.iconUrl,
+  googleBadgeUrl: "/brands/review-us-google.svg",
+  yelpBadgeUrl: "/brands/review-us-yelp.svg",
+  primaryColor: demoBusiness.accent,
+  secondaryColor: demoBusiness.accentSecondary,
+};
 
 export const demoDestinations: ReviewDestination[] = [
   {
     id: "google",
     provider: "google",
     name: "Google",
-    reviewUrl: "https://search.google.com/local/writereview?placeid=ChIJO_c-yLjgj4ARDnH58VKbhIg",
+    reviewUrl:
+      "https://search.google.com/local/writereview?placeid=ChIJO_c-yLjgj4ARDnH58VKbhIg",
     profileUrl: "https://maps.app.goo.gl/nxMPvZYEQbnqxyqF6",
     color: "#4285f4",
     enabled: true,

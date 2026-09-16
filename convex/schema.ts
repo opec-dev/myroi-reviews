@@ -45,6 +45,10 @@ export default defineSchema({
     googleBadgeStorageId: v.optional(v.id("_storage")),
     yelpBadgeStorageId: v.optional(v.id("_storage")),
     publicReviewPageUrl: v.optional(v.string()),
+    socialLinks: v.optional(v.array(v.object({
+      provider: v.union(v.literal("facebook"), v.literal("instagram"), v.literal("x"), v.literal("tiktok"), v.literal("youtube"), v.literal("linkedin"), v.literal("website")),
+      url: v.string(),
+    }))),
     primaryColor: v.string(),
     secondaryColor: v.optional(v.string()),
     isPublished: v.boolean(),
@@ -75,6 +79,7 @@ export default defineSchema({
 
   funnelSettings: defineTable({
     businessId: v.id("businesses"),
+    ratingIcon: v.optional(v.union(v.literal("star"), v.literal("heart"))),
     showBusinessName: v.boolean(),
     ratingHeadline: v.string(),
     ratingSubtext: v.string(),
@@ -232,6 +237,7 @@ export default defineSchema({
     status: v.union(v.literal("sent"),v.literal("not_sent"),v.literal("failed")),
     recipient: v.string(),
     subject: v.string(),
+    body: v.optional(v.string()),
     error: v.optional(v.string()),
     providerRole: v.optional(v.union(v.literal("primary"), v.literal("backup"))),
     occurredAt: v.number(),

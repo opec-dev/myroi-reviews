@@ -1,6 +1,4 @@
 import QRCode from "qrcode";
-import { ConvexHttpClient } from "convex/browser";
-import { makeFunctionReference } from "convex/server";
 import { demoBusiness } from "@/lib/demo-data";
 import { APP_ORIGIN } from "@/lib/auth-config";
 
@@ -12,20 +10,7 @@ export function generateStaticParams() {
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  let targetUrl = new URL(`/r/${encodeURIComponent(slug)}`, APP_ORIGIN);
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (convexUrl) {
-    try {
-      const data = await new ConvexHttpClient(convexUrl).query(
-        makeFunctionReference<"query">("businesses:publicLinkBySlug"),
-        { slug },
-      ) as null | { publicReviewPageUrl?: string };
-      if (data?.publicReviewPageUrl) targetUrl = new URL(data.publicReviewPageUrl);
-    } catch {
-      // Keep QR codes usable on the hosted funnel if client configuration is unavailable.
-    }
-  }
-  targetUrl.searchParams.set("src", "qr");
+  const targetUrl = new URL(`/go/${encodeURIComponent(slug)}`, APP_ORIGIN);
   const target = targetUrl.toString();
   const svg = await QRCode.toString(target, {
     type: "svg",

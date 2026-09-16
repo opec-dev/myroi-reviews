@@ -2,6 +2,7 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import { api } from "../../convex/_generated/api";
 import { AdminClients } from "@/components/admin-clients";
 import { ResellerAnalytics, ResellerEmailHealth } from "@/components/analytics-dashboard";
@@ -14,6 +15,7 @@ type EmailStatus = { configured:boolean; missing:string[]; smtpHostConfigured:bo
 const defaults:ResellerSettings = { businessName:"myROIagency", logoUrl:"/brands/myroiagency-logo.png", iconUrl:"/brands/myroiagency-mark.png", supportEmail:"support-team@myroiagency.com", website:"https://www.myroiagency.com", primaryDeliveryMethod:"mailjet_api", smtpHost:"", smtpPort:"587", smtpUser:"", smtpPassword:"", smtpPasswordConfigured:false, smtpTestRecipient:"", fromName:"myROIagency Reviews", fromEmail:"", notifyEmailFailures:true, failureAlertEmail:"support-team@myroiagency.com", backupDeliveryMethod:"smtp", alertSmtpHost:"", alertSmtpPort:"587", alertSmtpUser:"", alertSmtpPassword:"", alertSmtpPasswordConfigured:false, alertFromEmail:"" };
 
 export function ResellerAdmin() {
+  const router=useRouter();
   const currentUser=useQuery(api.accounts.current,{});const businesses=useQuery(api.businesses.mine,currentUser?{}:"skip");const bootstrapYorkshire=useMutation(api.accounts.bootstrapYorkshire);const bootstrapped=useRef(false);
   const reseller=useQuery(api.reseller.mine,currentUser?.isPlatformAdmin?{}:"skip");const emailPreferences=useQuery(api.emailSettings.mine,currentUser?.isPlatformAdmin?{}:"skip");const systemLog=useQuery(api.analytics.resellerOverview,currentUser?.isPlatformAdmin?{}:"skip");
   const saveReseller=useMutation(api.reseller.save);const generateUploadUrl=useMutation(api.reseller.generateUploadUrl);
@@ -30,8 +32,9 @@ export function ResellerAdmin() {
   const primaryMethodChanged=Boolean(emailPreferences&&settings.primaryDeliveryMethod!==savedPrimaryMethod);
   const backupMethodChanged=Boolean(emailPreferences&&settings.backupDeliveryMethod!==savedBackupMethod);
   useEffect(()=>{if(currentUser?.isPlatformAdmin)void refreshEmailStatus()},[currentUser?.isPlatformAdmin]);
+  useEffect(()=>{if(currentUser&&!currentUser.isPlatformAdmin&&businesses?.[0])router.replace(`/client/${businesses[0].slug}`)},[currentUser,businesses,router]);
   if(currentUser===undefined)return <main className="login-page"><section className="login-card"><h1>Loading secure dashboard…</h1></section></main>;
-  if(!currentUser?.isPlatformAdmin)return <main className="login-page"><section className="login-card"><h1>Administrator access required</h1><p>This signed-in account is not listed as a myROIagency platform administrator.</p><a className="button" href="/sign-out">Sign out</a></section></main>;
+  if(!currentUser?.isPlatformAdmin)return <main className="login-page"><section className="login-card"><h1>Opening your client workspace…</h1><p>Your secure account is being routed to the correct business.</p><a className="button" href="/sign-out">Sign out</a></section></main>;
   function change(event:ChangeEvent<HTMLInputElement|HTMLSelectElement>){ const key=event.target.name as keyof ResellerSettings; setSettings(current=>({...current,[key]:event.target instanceof HTMLInputElement&&event.target.type==="checkbox"?event.target.checked:event.target.value})); setSaved(false); }
   function upload(event:ChangeEvent<HTMLInputElement>, key:"logoUrl"|"iconUrl") { const file=event.target.files?.[0]; if(!file)return;setFiles(current=>({...current,[key==="logoUrl"?"logo":"icon"]:file})); const reader=new FileReader(); reader.onload=()=>{setSettings(current=>({...current,[key]:String(reader.result)}));setSaved(false)}; reader.readAsDataURL(file); }
   async function store(file?:File){if(!file)return undefined;const url=await generateUploadUrl({});const response=await fetch(url,{method:"POST",headers:{"Content-Type":file.type},body:file});if(!response.ok)throw new Error("The image upload failed.");return (await response.json() as {storageId:Id<"_storage">}).storageId}

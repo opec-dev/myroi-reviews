@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { defaultBusinessBranding } from "@/lib/demo-data";
+import type { SocialLink, SocialProvider } from "@/lib/demo-data";
 
 type InitialBranding = {
   logoUrl?: string | null;
@@ -12,6 +13,7 @@ type InitialBranding = {
   googleBadgeUrl?: string | null;
   yelpBadgeUrl?: string | null;
   publicReviewPageUrl?: string;
+  socialLinks?: SocialLink[];
   primaryColor: string;
   secondaryColor?: string;
 };
@@ -30,6 +32,7 @@ export function BusinessBrandingSettings({
       initial.googleBadgeUrl || defaultBusinessBranding.googleBadgeUrl!,
     yelpBadgeUrl: initial.yelpBadgeUrl || defaultBusinessBranding.yelpBadgeUrl!,
     publicReviewPageUrl: initial.publicReviewPageUrl || "",
+    socialLinks: initial.socialLinks || [],
     primaryColor: initial.primaryColor,
     secondaryColor: initial.secondaryColor || "#e63946",
   });
@@ -93,6 +96,7 @@ export function BusinessBrandingSettings({
       await saveBranding({
         businessId,
         publicReviewPageUrl: branding.publicReviewPageUrl || undefined,
+        socialLinks: branding.socialLinks.filter((link) => link.url.trim()),
         primaryColor: branding.primaryColor,
         secondaryColor: branding.secondaryColor,
         ...(logoStorageId ? { logoStorageId } : {}),
@@ -206,6 +210,92 @@ export function BusinessBrandingSettings({
             needed. Leave blank to use the hosted myROI Reviews URL.
           </small>
         </label>
+        <div className="wide-field social-link-editor">
+          <strong>
+            Social links <span>(optional)</span>
+          </strong>
+          <small>
+            Shown as tappable “Follow us” links after the rating experience.
+          </small>
+          {branding.socialLinks.map((link, index) => (
+            <div className="social-link-row" key={`${link.provider}-${index}`}>
+              <select
+                value={link.provider}
+                onChange={(event) =>
+                  setBranding({
+                    ...branding,
+                    socialLinks: branding.socialLinks.map((item, i) =>
+                      i === index
+                        ? {
+                            ...item,
+                            provider: event.target.value as SocialProvider,
+                          }
+                        : item,
+                    ),
+                  })
+                }
+              >
+                {[
+                  "facebook",
+                  "instagram",
+                  "x",
+                  "tiktok",
+                  "youtube",
+                  "linkedin",
+                  "website",
+                ].map((provider) => (
+                  <option value={provider} key={provider}>
+                    {provider === "x"
+                      ? "X"
+                      : provider[0].toUpperCase() + provider.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="url"
+                placeholder="https://…"
+                value={link.url}
+                onChange={(event) =>
+                  setBranding({
+                    ...branding,
+                    socialLinks: branding.socialLinks.map((item, i) =>
+                      i === index ? { ...item, url: event.target.value } : item,
+                    ),
+                  })
+                }
+              />
+              <button
+                className="small-action"
+                type="button"
+                onClick={() =>
+                  setBranding({
+                    ...branding,
+                    socialLinks: branding.socialLinks.filter(
+                      (_, i) => i !== index,
+                    ),
+                  })
+                }
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            className="button"
+            type="button"
+            onClick={() =>
+              setBranding({
+                ...branding,
+                socialLinks: [
+                  ...branding.socialLinks,
+                  { provider: "facebook", url: "" },
+                ],
+              })
+            }
+          >
+            + Add social link
+          </button>
+        </div>
       </div>
       <div className="settings-save">
         <small>
