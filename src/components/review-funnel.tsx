@@ -11,6 +11,7 @@ import {
   ReviewDestination,
 } from "@/lib/demo-data";
 import { recordPilotEmail, trackPilotEvent } from "@/lib/pilot-tracking";
+import { ProviderBadge, SocialBadge } from "@/components/provider-badge";
 
 type Stage = "rating" | "positive" | "recovery" | "complete";
 
@@ -60,6 +61,7 @@ export function ReviewFunnel({
               ? "#d32323"
               : "#6857d9",
         enabled: row.isEnabled,
+        iconUrl: row.iconUrl,
       })) as ReviewDestination[],
     );
     if (!trackedView.current) {
@@ -174,7 +176,7 @@ export function ReviewFunnel({
           <div className="funnel-stage">
             <h1>{settings.ratingHeadline}</h1>
             <p>{settings.ratingSubtext}</p>
-            <div className="rating-picker" onMouseLeave={() => setHovered(0)}>
+            <div className={`rating-picker ${settings.ratingIcon === "heart" ? "hearts" : ""}`} onMouseLeave={() => setHovered(0)}>
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
                   key={value}
@@ -219,13 +221,8 @@ export function ReviewFunnel({
                       })
                     }
                   >
-                    <span
-                      className="source-icon"
-                      style={{ background: destination.color }}
-                    >
-                      {destination.name[0]}
-                    </span>
-                    Review us on {destination.name}
+                    <ProviderBadge provider={destination.provider} label={destination.name} iconUrl={destination.iconUrl} />
+                    <span>Review us on {destination.name}</span>
                     <b>↗</b>
                   </a>
                 ))}
@@ -306,8 +303,8 @@ export function ReviewFunnel({
                   rel="noopener noreferrer"
                   aria-label={link.provider}
                 >
-                  {socialGlyph(link.provider)}
-                  <span>{link.provider === "x" ? "X" : link.provider}</span>
+                  <SocialBadge provider={link.provider} iconUrl={link.iconUrl} />
+                  <span className="visually-hidden">{link.provider === "x" ? "X" : link.provider}</span>
                 </a>
               ))}
             </div>
@@ -315,21 +312,5 @@ export function ReviewFunnel({
         )}
       </section>
     </main>
-  );
-}
-
-function socialGlyph(provider: string) {
-  return (
-    (
-      {
-        facebook: "f",
-        instagram: "◎",
-        x: "𝕏",
-        tiktok: "♪",
-        youtube: "▶",
-        linkedin: "in",
-        website: "↗",
-      } as Record<string, string>
-    )[provider] ?? "↗"
   );
 }

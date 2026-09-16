@@ -59,10 +59,26 @@ export const publicBySlug = query({
         ? ctx.storage.getUrl(business.iconStorageId)
         : null,
     ]);
+    const socialLinks = await Promise.all(
+      (business.socialLinks ?? []).map(async (link) => ({
+        ...link,
+        iconUrl: link.iconStorageId
+          ? await ctx.storage.getUrl(link.iconStorageId)
+          : null,
+      })),
+    );
+    const resolvedDestinations = await Promise.all(
+      destinations.filter((x) => x.isEnabled).map(async (destination) => ({
+        ...destination,
+        iconUrl: destination.iconStorageId
+          ? await ctx.storage.getUrl(destination.iconStorageId)
+          : null,
+      })),
+    );
     return {
-      business: { ...business, logoUrl, iconUrl },
+      business: { ...business, socialLinks, logoUrl, iconUrl },
       funnel,
-      destinations: destinations.filter((x) => x.isEnabled),
+      destinations: resolvedDestinations,
     };
   },
 });

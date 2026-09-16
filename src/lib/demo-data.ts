@@ -18,6 +18,7 @@ export type ReviewDestination = {
   profileUrl?: string;
   color: string;
   enabled: boolean;
+  iconUrl?: string | null;
 };
 
 export const reviewPlatformCatalog: Array<{
@@ -103,7 +104,7 @@ export type SocialProvider =
   | "youtube"
   | "linkedin"
   | "website";
-export type SocialLink = { provider: SocialProvider; url: string };
+export type SocialLink = { provider: SocialProvider; url: string; iconStorageId?: Id<"_storage">; iconUrl?: string | null };
 export type ClientNotificationSettings = {
   notificationEmail: string;
   notifyPrivateFeedback: boolean;
@@ -295,3 +296,4 @@ export const demoReviews: PublishedReview[] = [
     sourceUrl: demoDestinations[2].profileUrl!,
   },
 ];
+import type { Id } from "../../convex/_generated/dataModel";

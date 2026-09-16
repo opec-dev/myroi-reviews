@@ -48,6 +48,7 @@ export default defineSchema({
     socialLinks: v.optional(v.array(v.object({
       provider: v.union(v.literal("facebook"), v.literal("instagram"), v.literal("x"), v.literal("tiktok"), v.literal("youtube"), v.literal("linkedin"), v.literal("website")),
       url: v.string(),
+      iconStorageId: v.optional(v.id("_storage")),
     }))),
     primaryColor: v.string(),
     secondaryColor: v.optional(v.string()),
@@ -73,6 +74,7 @@ export default defineSchema({
     label: v.string(),
     reviewUrl: v.string(),
     profileUrl: v.optional(v.string()),
+    iconStorageId: v.optional(v.id("_storage")),
     displayOrder: v.number(),
     isEnabled: v.boolean(),
   }).index("by_business", ["businessId", "displayOrder"]),
@@ -207,6 +209,8 @@ export default defineSchema({
     minimumRating: v.number(),
     wallEnabled: v.boolean(),
     wallPageSize: v.number(),
+    wallBackgroundColor: v.optional(v.string()),
+    showReviewDates: v.optional(v.boolean()),
   }).index("by_business", ["businessId"]),
 
   outboundClicks: defineTable({

@@ -11,6 +11,7 @@ import { ClientAnalytics } from "@/components/analytics-dashboard";
 import { ClientNotificationSettingsEditor } from "@/components/client-notification-settings";
 import { ReviewManager } from "@/components/review-manager";
 import { FeedbackInbox } from "@/components/feedback-inbox";
+import { EmbedDisplaySettings } from "@/components/embed-display-settings";
 
 export function ClientWorkspace({ slug }: { slug: string }) {
   const user = useQuery(api.accounts.current, {});
@@ -203,7 +204,7 @@ export function ClientWorkspace({ slug }: { slug: string }) {
           <section id="funnel" className="panel">
             <FunnelSettingsEditor
               businessId={business._id}
-              business={{ name: business.name, slug: business.slug, logoUrl }}
+              business={{ name: business.name, slug: business.slug, logoUrl, socialLinks: business.socialLinks }}
             />
           </section>
           <section id="reviews" className="panel">
@@ -231,6 +232,7 @@ export function ClientWorkspace({ slug }: { slug: string }) {
                 <code>{`<iframe src="${appOrigin}/reviews/${business.slug}" title="Customer reviews" loading="lazy" style="width:100%;min-height:720px;border:0"></iframe>`}</code>
               </article>
             </div>
+            <EmbedDisplaySettings businessId={business._id} />
           </section>
           <section id="print" className="panel">
             <PrintCardSettingsEditor

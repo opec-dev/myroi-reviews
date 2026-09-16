@@ -48,7 +48,15 @@ export const workspaceBySlug = query({
         ? ctx.storage.getUrl(business.yelpBadgeStorageId)
         : null,
     ]);
-    return { ...business, logoUrl, iconUrl, googleBadgeUrl, yelpBadgeUrl };
+    const socialLinks = await Promise.all(
+      (business.socialLinks ?? []).map(async (link) => ({
+        ...link,
+        iconUrl: link.iconStorageId
+          ? await ctx.storage.getUrl(link.iconStorageId)
+          : null,
+      })),
+    );
+    return { ...business, socialLinks, logoUrl, iconUrl, googleBadgeUrl, yelpBadgeUrl };
   },
 });
 export const publicLinkBySlug = query({
@@ -105,7 +113,11 @@ export const saveBranding = mutation({
     yelpBadgeStorageId: v.optional(v.id("_storage")),
     publicReviewPageUrl: v.optional(v.string()),
     socialLinks: v.optional(
-      v.array(v.object({ provider: socialProvider, url: v.string() })),
+      v.array(v.object({
+        provider: socialProvider,
+        url: v.string(),
+        iconStorageId: v.optional(v.id("_storage")),
+      })),
     ),
     primaryColor: v.string(),
     secondaryColor: v.optional(v.string()),

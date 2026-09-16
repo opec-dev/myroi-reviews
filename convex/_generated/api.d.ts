@@ -14,6 +14,7 @@ import type * as businesses from "../businesses.js";
 import type * as clientNotifications from "../clientNotifications.js";
 import type * as destinations from "../destinations.js";
 import type * as emailSettings from "../emailSettings.js";
+import type * as embeds from "../embeds.js";
 import type * as funnel from "../funnel.js";
 import type * as helpers from "../helpers.js";
 import type * as printCards from "../printCards.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   clientNotifications: typeof clientNotifications;
   destinations: typeof destinations;
   emailSettings: typeof emailSettings;
+  embeds: typeof embeds;
   funnel: typeof funnel;
   helpers: typeof helpers;
   printCards: typeof printCards;

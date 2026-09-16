@@ -6,6 +6,7 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { defaultBusinessBranding } from "@/lib/demo-data";
 import type { SocialLink, SocialProvider } from "@/lib/demo-data";
+import { SocialBadge } from "@/components/provider-badge";
 
 type InitialBranding = {
   logoUrl?: string | null;
@@ -43,6 +44,7 @@ export function BusinessBrandingSettings({
     yelpBadge?: File;
   }>({});
   const [message, setMessage] = useState("");
+  const [socialFiles, setSocialFiles] = useState<Record<number, File>>({});
   const [saving, setSaving] = useState(false);
   const generateUploadUrl = useMutation(api.businesses.generateUploadUrl);
   const saveBranding = useMutation(api.businesses.saveBranding);
@@ -73,6 +75,17 @@ export function BusinessBrandingSettings({
     if (!response.ok) throw new Error("The image upload failed.");
     return ((await response.json()) as { storageId: Id<"_storage"> }).storageId;
   }
+  function uploadSocial(index: number, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setSocialFiles((current) => ({ ...current, [index]: file }));
+    const reader = new FileReader();
+    reader.onload = () => setBranding((current) => ({
+      ...current,
+      socialLinks: current.socialLinks.map((link, i) => i === index ? { ...link, iconUrl: String(reader.result) } : link),
+    }));
+    reader.readAsDataURL(file);
+  }
   async function save() {
     setSaving(true);
     setMessage("");
@@ -93,10 +106,23 @@ export function BusinessBrandingSettings({
         store(files.googleBadge),
         store(files.yelpBadge),
       ]);
+      const resolvedSocialLinks = (await Promise.all(
+        branding.socialLinks.map(async (link, index) => {
+          if (!link.url.trim()) return null;
+          const iconStorageId = await store(socialFiles[index]);
+          return {
+            provider: link.provider,
+            url: link.url.trim(),
+            iconUrl: link.iconUrl,
+            ...(iconStorageId || link.iconStorageId ? { iconStorageId: iconStorageId || link.iconStorageId } : {}),
+          };
+        }),
+      )).filter((link): link is NonNullable<typeof link> => link !== null);
+      const socialLinks = resolvedSocialLinks.map(({ iconUrl: _iconUrl, ...link }) => link);
       await saveBranding({
         businessId,
         publicReviewPageUrl: branding.publicReviewPageUrl || undefined,
-        socialLinks: branding.socialLinks.filter((link) => link.url.trim()),
+        socialLinks,
         primaryColor: branding.primaryColor,
         secondaryColor: branding.secondaryColor,
         ...(logoStorageId ? { logoStorageId } : {}),
@@ -104,7 +130,9 @@ export function BusinessBrandingSettings({
         ...(googleBadgeStorageId ? { googleBadgeStorageId } : {}),
         ...(yelpBadgeStorageId ? { yelpBadgeStorageId } : {}),
       });
+      setBranding((current) => ({ ...current, socialLinks: resolvedSocialLinks }));
       setFiles({});
+      setSocialFiles({});
       setMessage("Business branding and public review destination saved.");
     } catch (error) {
       setMessage(
@@ -219,6 +247,7 @@ export function BusinessBrandingSettings({
           </small>
           {branding.socialLinks.map((link, index) => (
             <div className="social-link-row" key={`${link.provider}-${index}`}>
+              <SocialBadge provider={link.provider} iconUrl={link.iconUrl} />
               <select
                 value={link.provider}
                 onChange={(event) =>
@@ -264,6 +293,10 @@ export function BusinessBrandingSettings({
                   })
                 }
               />
+              <label className="social-icon-file">
+                Replace icon
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={(event) => uploadSocial(index, event)} />
+              </label>
               <button
                 className="small-action"
                 type="button"

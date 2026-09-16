@@ -5,6 +5,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { defaultFunnelSettings, FunnelSettings } from "@/lib/demo-data";
+import type { SocialLink } from "@/lib/demo-data";
+import { ProviderBadge, SocialBadge } from "@/components/provider-badge";
 
 type PreviewStage = "rating" | "positive" | "recovery" | "complete";
 
@@ -13,9 +15,10 @@ export function FunnelSettingsEditor({
   business,
 }: {
   businessId: Id<"businesses">;
-  business: { name: string; slug: string; logoUrl?: string | null };
+  business: { name: string; slug: string; logoUrl?: string | null; socialLinks?: SocialLink[] };
 }) {
   const stored = useQuery(api.funnel.forBusiness, { businessId });
+  const destinations = useQuery(api.destinations.listForBusiness, { businessId });
   const saveSettings = useMutation(api.funnel.saveSettings);
   const [settings, setSettings] = useState(defaultFunnelSettings);
   const [stage, setStage] = useState<PreviewStage>("rating");
@@ -99,17 +102,15 @@ export function FunnelSettingsEditor({
               />{" "}
               Show business name below logo
             </label>
-            <label>
-              Rating icon
-              <select
-                name="ratingIcon"
-                value={settings.ratingIcon}
-                onChange={change}
-              >
-                <option value="star">Stars</option>
-                <option value="heart">Hearts</option>
-              </select>
-            </label>
+            <fieldset className="rating-icon-picker">
+              <legend>Rating icon</legend>
+              <button type="button" className={settings.ratingIcon === "star" ? "active" : ""} onClick={() => { setSettings(current => ({ ...current, ratingIcon: "star" })); setSaved(false); }}>
+                <span className="rating-choice-star">★</span> Stars
+              </button>
+              <button type="button" className={settings.ratingIcon === "heart" ? "active" : ""} onClick={() => { setSettings(current => ({ ...current, ratingIcon: "heart" })); setSaved(false); }}>
+                <span className="rating-choice-heart">♥</span> Hearts
+              </button>
+            </fieldset>
             <label>
               Rating headline
               <input
@@ -264,6 +265,7 @@ export function FunnelSettingsEditor({
           settings={settings}
           stage={stage}
           business={business}
+          destinations={destinations ?? []}
         />
       </div>
       <div className="compliance-note">
@@ -324,10 +326,12 @@ function FunnelMiniPreview({
   settings,
   stage,
   business,
+  destinations,
 }: {
   settings: FunnelSettings;
   stage: PreviewStage;
-  business: { name: string; logoUrl?: string | null };
+  business: { name: string; logoUrl?: string | null; socialLinks?: SocialLink[] };
+  destinations: Array<{ _id: string; provider: string; label: string; isEnabled: boolean; iconUrl?: string | null }>;
 }) {
   const symbol = settings.ratingIcon === "heart" ? "♥" : "★";
   return (
@@ -340,7 +344,7 @@ function FunnelMiniPreview({
           <>
             <h3>{settings.ratingHeadline}</h3>
             <p>{settings.ratingSubtext}</p>
-            <div className="mini-stars">{symbol.repeat(5)}</div>
+            <div className={`mini-stars ${settings.ratingIcon === "heart" ? "hearts" : ""}`}>{symbol.repeat(5)}</div>
             <small>Tap a {settings.ratingIcon} to rate your experience</small>
           </>
         )}
@@ -349,8 +353,14 @@ function FunnelMiniPreview({
             <span className="preview-mark">♥</span>
             <h3>{settings.positiveHeadline}</h3>
             <p>{settings.positiveSubtext}</p>
-            <button>Review us on Google</button>
-            <button>Review us on Yelp</button>
+            <div className="mini-review-buttons">
+              {destinations.filter(item => item.isEnabled).map(destination => (
+                <button key={destination._id}>
+                  <ProviderBadge provider={destination.provider} label={destination.label} iconUrl={destination.iconUrl} size="small" />
+                  <span>Review us on {destination.label}</span><b>↗</b>
+                </button>
+              ))}
+            </div>
             <small>{settings.maybeLaterText}</small>
           </>
         )}
@@ -371,6 +381,12 @@ function FunnelMiniPreview({
             <h3>{settings.completionHeadline}</h3>
             <p>{settings.completionSubtext}</p>
           </>
+        )}
+        {!!business.socialLinks?.length && (
+          <div className="mini-socials">
+            <small>Follow us</small>
+            <div>{business.socialLinks.map(link => <SocialBadge key={`${link.provider}-${link.url}`} provider={link.provider} iconUrl={link.iconUrl} />)}</div>
+          </div>
         )}
       </div>
     </aside>

@@ -21,9 +21,14 @@ export const importMany=mutation({args:{businessId:v.id("businesses"),reviews:v.
 
 export const publicBySlug=query({args:{slug:v.string()},handler:async(ctx,{slug})=>{
   const business=await ctx.db.query("businesses").withIndex("by_slug",q=>q.eq("slug",slug)).unique();if(!business||!business.isPublished)return null;
-  const rows=await ctx.db.query("reviews").withIndex("by_business_published",q=>q.eq("businessId",business._id).eq("isPublished",true)).collect();
+  const [rows,settings,destinations]=await Promise.all([
+    ctx.db.query("reviews").withIndex("by_business_published",q=>q.eq("businessId",business._id).eq("isPublished",true)).collect(),
+    ctx.db.query("embedSettings").withIndex("by_business",q=>q.eq("businessId",business._id)).unique(),
+    ctx.db.query("reviewDestinations").withIndex("by_business",q=>q.eq("businessId",business._id)).collect(),
+  ]);
   const logoUrl=business.logoStorageId?await ctx.storage.getUrl(business.logoStorageId):null;
-  return{business:{name:business.name,slug:business.slug,primaryColor:business.primaryColor,logoUrl,publicReviewPageUrl:business.publicReviewPageUrl},reviews:rows.sort((a,b)=>String(b.reviewDate??"").localeCompare(String(a.reviewDate??"")))};
+  const providerIcons=Object.fromEntries(await Promise.all(destinations.map(async destination=>[destination.provider,destination.iconStorageId?await ctx.storage.getUrl(destination.iconStorageId):null])));
+  return{business:{name:business.name,slug:business.slug,primaryColor:business.primaryColor,logoUrl,publicReviewPageUrl:business.publicReviewPageUrl},settings,providerIcons,reviews:rows.sort((a,b)=>String(b.reviewDate??"").localeCompare(String(a.reviewDate??"")))};
 }});
 
 function fingerprint(item:{reviewerName:string;reviewDate?:string;excerpt:string}){return `${item.reviewerName}|${item.reviewDate??""}|${item.excerpt}`.toLowerCase().replace(/\s+/g," ").slice(0,500)}
